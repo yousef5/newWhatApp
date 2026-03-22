@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
@@ -104,6 +104,43 @@ export function registerIPCHandlers(): void {
     const session = accountManager.getSession(payload.accountId)
     if (!session) return
     session.starMessage(payload.messageId, payload.starred)
+  })
+
+  ipcMain.handle('message:getStarred', (_event, payload: IPCCommands['message:getStarred']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return []
+    return session.getStarredMessages(payload.jid)
+  })
+
+  ipcMain.handle('chat:export', async (event, payload: IPCCommands['chat:export']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return { filePath: '' }
+
+    const messages = session.getMessages(payload.jid, undefined, 100000)
+    const chat = session.getChats().find((c) => c.jid === payload.jid)
+    const chatName = chat?.name || payload.jid
+
+    const lines = messages.map((msg) => {
+      const date = new Date(msg.timestamp * 1000)
+      const dateStr = date.toISOString().slice(0, 10)
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+      const sender = msg.isFromMe ? 'You' : (msg.senderJid?.split('@')[0] || 'Unknown')
+      const content = msg.content || `[${msg.type}]`
+      return `${dateStr} ${timeStr} - ${sender}: ${content}`
+    })
+
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const result = await dialog.showSaveDialog(win!, {
+      defaultPath: `${chatName.replace(/[^a-zA-Z0-9]/g, '_')}_chat_export.txt`,
+      filters: [{ name: 'Text Files', extensions: ['txt'] }],
+    })
+
+    if (result.canceled || !result.filePath) {
+      return { filePath: '' }
+    }
+
+    writeFileSync(result.filePath, lines.join('\n'), 'utf-8')
+    return { filePath: result.filePath }
   })
 
   ipcMain.handle('message:forward', async (_event, payload: IPCCommands['message:forward']['payload']) => {

@@ -381,6 +381,10 @@ export class BaileysSession extends EventEmitter {
     this.messageStore.setStar(messageId, starred)
   }
 
+  getStarredMessages(jid?: string): Message[] {
+    return this.messageStore.getStarred(jid)
+  }
+
   getSocket(): WASocket | null {
     return this.socket
   }

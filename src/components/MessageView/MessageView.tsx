@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useChatsStore } from '@/stores/chats'
 import { useAccountsStore } from '@/stores/accounts'
 import { useMessagesStore } from '@/stores/messages'
 import ConnectionBanner from '@/components/shared/ConnectionBanner'
+import StarredMessages from '@/components/StarredMessages/StarredMessages'
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
@@ -17,6 +18,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
   const chat = useChatsStore((s) => s.chats.find((c) => c.jid === chatJid))
   const account = useAccountsStore((s) => s.accounts.find((a) => a.id === accountId))
   const addMessage = useMessagesStore((s) => s.addMessage)
+  const [showStarred, setShowStarred] = useState(false)
 
   const isConnected = account?.connectionState === 'open'
 
@@ -85,6 +87,17 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
     // Placeholder - no-op for now
   }, [])
 
+  const handleExportChat = useCallback(async () => {
+    try {
+      const result = await window.api.invoke('chat:export', { accountId, jid: chatJid })
+      if (result.filePath) {
+        console.log('Chat exported to:', result.filePath)
+      }
+    } catch (err) {
+      console.error('Failed to export chat:', err)
+    }
+  }, [accountId, chatJid])
+
   const handleRetry = useCallback(() => {
     window.api.invoke('account:reconnect', { id: accountId }).catch(console.error)
   }, [accountId])
@@ -113,6 +126,8 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
         chatJid={chatJid}
         chatName={chat.name}
         isGroup={chat.isGroup}
+        onExportChat={handleExportChat}
+        onStarredMessages={() => setShowStarred(true)}
       />
 
       {/* Messages */}
@@ -124,6 +139,14 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
 
       {/* Input */}
       <MessageInput onSend={handleSend} onAttach={handleAttach} onSendVoice={handleSendVoice} />
+
+      {/* Starred messages overlay */}
+      {showStarred && (
+        <StarredMessages
+          accountId={accountId}
+          onClose={() => setShowStarred(false)}
+        />
+      )}
     </div>
   )
 }
