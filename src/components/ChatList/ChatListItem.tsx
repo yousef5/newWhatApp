@@ -25,14 +25,14 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
           chat.isGroup ? 'bg-accent-blue' : 'bg-bg-tertiary'
         }`}
       >
-        {getInitials(chat.name)}
+        {getInitials(chat.name || chat.jid.split('@')[0])}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <span className="text-[12px] font-semibold text-text-primary truncate">
-            {chat.name}
+            {chat.name || chat.jid.split('@')[0]}
           </span>
           {chat.lastMessageTimestamp && (
             <span

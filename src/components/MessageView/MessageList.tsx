@@ -117,8 +117,8 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       {groupedMessages.map((group) => (
         <div key={group.date}>
           {/* Date divider */}
-          <div className="flex justify-center py-2">
-            <span className="text-[10px] text-text-muted bg-bg-tertiary px-3 py-0.5 rounded-full">
+          <div className="flex justify-center py-3">
+            <span className="text-[11px] text-text-secondary bg-bg-tertiary/80 px-4 py-1 rounded-md shadow-sm">
               {group.date}
             </span>
           </div>

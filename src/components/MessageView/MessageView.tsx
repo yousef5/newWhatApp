@@ -147,7 +147,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
       <ChatHeader
         accountId={accountId}
         chatJid={chatJid}
-        chatName={chat.name}
+        chatName={chat.name || chat.jid.split('@')[0]}
         isGroup={chat.isGroup}
         onExportChat={handleExportChat}
         onStarredMessages={() => setShowStarred(true)}
