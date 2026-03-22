@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react'
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
 import { List } from 'react-window'
 import { useChatsStore } from '@/stores/chats'
 import { useMessagesStore } from '@/stores/messages'
@@ -10,8 +10,21 @@ interface ChatListProps {
 }
 
 export default function ChatList({ accountId }: ChatListProps) {
-  const filteredChats = useChatsStore((s) => s.getFilteredChats())
+  const chats = useChatsStore((s) => s.chats)
+  const filter = useChatsStore((s) => s.filter)
+  const searchQuery = useChatsStore((s) => s.searchQuery)
   const activeChatJid = useChatsStore((s) => s.activeChatJid)
+
+  const filteredChats = useMemo(() => {
+    let result = chats
+    if (filter === 'unread') result = result.filter((c) => c.unreadCount > 0)
+    else if (filter === 'groups') result = result.filter((c) => c.isGroup)
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((c) => c.name?.toLowerCase().includes(q))
+    }
+    return result
+  }, [chats, filter, searchQuery])
   const setActiveChat = useChatsStore((s) => s.setActiveChat)
   const clearMessages = useMessagesStore((s) => s.clear)
   const setMessages = useMessagesStore((s) => s.setMessages)
