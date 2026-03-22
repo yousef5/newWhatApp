@@ -73,6 +73,11 @@ export class BaileysSession extends EventEmitter {
           state: 'open',
         })
         this.emit('open')
+
+        // Fetch profile pictures in background after connection
+        this.fetchProfilePictures().catch((e) =>
+          console.error('Profile picture fetch error:', e)
+        )
       }
 
       if (connection === 'connecting') {
@@ -458,6 +463,47 @@ export class BaileysSession extends EventEmitter {
   }
 
   // --- Message parser ---
+
+  private async fetchProfilePictures(): Promise<void> {
+    if (!this.socket) return
+    const chats = this.chatStore.getAll()
+    const { existsSync, mkdirSync, writeFileSync } = await import('fs')
+    const { join } = await import('path')
+    const { getAccountDir } = await import('../storage/config')
+
+    const avatarDir = join(getAccountDir(this.accountId), 'avatars')
+    if (!existsSync(avatarDir)) mkdirSync(avatarDir, { recursive: true })
+
+    // Fetch in batches with delay to avoid rate limiting
+    for (const chat of chats.slice(0, 100)) {
+      try {
+        const existing = this.contactStore.getContact(chat.jid)
+        if (existing?.profilePicturePath) continue // already have it
+
+        const url = await this.socket!.profilePictureUrl(chat.jid, 'image').catch(() => null)
+        if (!url) continue
+
+        // Download the image
+        const response = await fetch(url)
+        if (!response.ok) continue
+        const buffer = Buffer.from(await response.arrayBuffer())
+
+        const filePath = join(avatarDir, `${chat.jid.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`)
+        writeFileSync(filePath, buffer)
+
+        this.contactStore.upsertContact({
+          jid: chat.jid,
+          profilePictureUrl: url,
+          profilePicturePath: filePath,
+        })
+      } catch {
+        // Skip failed ones silently
+      }
+
+      // Small delay between requests
+      await new Promise((r) => setTimeout(r, 200))
+    }
+  }
 
   private async downloadMedia(msg: any, messageId: string): Promise<void> {
     try {

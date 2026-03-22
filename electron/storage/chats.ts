@@ -12,7 +12,8 @@ export class ChatStore {
     const rows = this.db.prepare(`
       SELECT
         c.*,
-        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name,
+        ct.profile_picture_path as profile_pic
       FROM chats c
       LEFT JOIN contacts ct ON c.jid = ct.jid
       LEFT JOIN group_metadata gm ON c.jid = gm.jid
@@ -27,7 +28,8 @@ export class ChatStore {
     const row = this.db.prepare(`
       SELECT
         c.*,
-        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name,
+        ct.profile_picture_path as profile_pic
       FROM chats c
       LEFT JOIN contacts ct ON c.jid = ct.jid
       LEFT JOIN group_metadata gm ON c.jid = gm.jid
@@ -82,6 +84,7 @@ export class ChatStore {
     return {
       jid: row.jid,
       name: row.resolved_name ?? row.name,
+      profilePicture: row.profile_pic ?? null,
       isGroup: !!row.is_group,
       unreadCount: row.unread_count,
       lastMessageTimestamp: row.last_message_timestamp,

@@ -9,11 +9,12 @@ interface ChatHeaderProps {
   chatJid: string
   chatName: string
   isGroup: boolean
+  profilePicture?: string | null
   onExportChat?: () => void
   onStarredMessages?: () => void
 }
 
-export default function ChatHeader({ accountId, chatJid, chatName, isGroup, onExportChat, onStarredMessages }: ChatHeaderProps) {
+export default function ChatHeader({ accountId, chatJid, chatName, isGroup, profilePicture, onExportChat, onStarredMessages }: ChatHeaderProps) {
   const [presence, setPresence] = useState<PresenceData | null>(null)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -37,13 +38,17 @@ export default function ChatHeader({ accountId, chatJid, chatName, isGroup, onEx
     <>
       <div className="h-14 px-4 flex items-center gap-3 border-b border-border-primary bg-bg-secondary shrink-0">
         {/* Avatar */}
-        <div
-          className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0 ${
-            isGroup ? 'bg-accent-blue' : 'bg-bg-tertiary'
-          }`}
-        >
-          {getInitials(chatName)}
-        </div>
+        {profilePicture ? (
+          <img src={`file://${profilePicture}`} alt="" className="w-9 h-9 rounded-full shrink-0 object-cover" />
+        ) : (
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0 ${
+              isGroup ? 'bg-accent-blue' : 'bg-bg-tertiary'
+            }`}
+          >
+            {getInitials(chatName)}
+          </div>
+        )}
 
         {/* Name + presence */}
         <div

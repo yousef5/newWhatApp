@@ -28,6 +28,7 @@ export interface Chat {
   mutedUntil: number
   pinned: boolean
   archived: boolean
+  profilePicture?: string | null
 }
 
 // ============ Message ============

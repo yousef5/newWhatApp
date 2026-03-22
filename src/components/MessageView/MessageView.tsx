@@ -149,6 +149,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
         chatJid={chatJid}
         chatName={chat.name || chat.jid.split('@')[0]}
         isGroup={chat.isGroup}
+        profilePicture={chat.profilePicture}
         onExportChat={handleExportChat}
         onStarredMessages={() => setShowStarred(true)}
       />
