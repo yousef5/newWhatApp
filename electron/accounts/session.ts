@@ -390,8 +390,24 @@ export class BaileysSession extends EventEmitter {
     socket.ev.on('messaging-history.set', ({ chats, contacts, messages, isLatest }) => { try {
       console.log(`[${this.accountId}] History sync: ${chats.length} chats, ${contacts.length} contacts, ${messages.length} messages`)
 
-      // Upsert all chats
+      // Upsert all chats — extract last message preview from the chat object
       for (const chat of chats) {
+        // Try to get the last message text from the chat's messages array
+        let lastPreview: string | null = null
+        const lastMsg = (chat as any).messages?.[0]?.message
+        if (lastMsg) {
+          lastPreview = lastMsg.conversation
+            ?? lastMsg.extendedTextMessage?.text
+            ?? lastMsg.imageMessage?.caption
+            ?? lastMsg.videoMessage?.caption
+            ?? (lastMsg.imageMessage ? '[Image]' : null)
+            ?? (lastMsg.videoMessage ? '[Video]' : null)
+            ?? (lastMsg.audioMessage ? '[Voice Note]' : null)
+            ?? (lastMsg.stickerMessage ? '[Sticker]' : null)
+            ?? (lastMsg.documentMessage?.fileName ?? (lastMsg.documentMessage ? '[Document]' : null))
+            ?? null
+        }
+
         this.chatStore.upsert({
           jid: chat.id,
           name: chat.name ?? undefined,
@@ -402,6 +418,7 @@ export class BaileysSession extends EventEmitter {
             : typeof chat.conversationTimestamp === 'object' && chat.conversationTimestamp
               ? Number(chat.conversationTimestamp.low || chat.conversationTimestamp)
               : undefined,
+          lastMessagePreview: lastPreview ?? undefined,
           pinned: chat.pinned ? true : false,
           archived: chat.archived ? true : false,
         })
@@ -461,6 +478,13 @@ export class BaileysSession extends EventEmitter {
           jid: chat.jid,
           update: chat,
         })
+      }
+
+      // Fetch recent messages for top chats that don't have messages yet
+      if (this.socket) {
+        this.fetchRecentMessagesForChats().catch(e =>
+          console.error('fetchRecentMessages error:', e)
+        )
       }
     } catch (e) { console.error('messaging-history.set error:', e) } })
   }
@@ -587,6 +611,45 @@ export class BaileysSession extends EventEmitter {
   }
 
   // --- Message parser ---
+
+  private async fetchRecentMessagesForChats(): Promise<void> {
+    if (!this.socket) return
+    const chats = this.chatStore.getAll()
+    console.log(`[${this.accountId}] Fetching recent messages for ${Math.min(chats.length, 50)} chats...`)
+
+    // Request messages for top 50 chats that have no local messages
+    let fetched = 0
+    for (const chat of chats.slice(0, 50)) {
+      const localMsgs = this.messageStore.getForChat(chat.jid, undefined, 1)
+      if (localMsgs.length > 0) continue // already have messages
+
+      try {
+        await (this.socket as any).fetchMessageHistory(10, {
+          remoteJid: chat.jid,
+          id: '',
+          fromMe: false,
+        }, 0)
+        fetched++
+        // Small delay between requests
+        await new Promise(r => setTimeout(r, 300))
+      } catch {
+        // Skip failed ones
+      }
+    }
+    console.log(`[${this.accountId}] Requested messages for ${fetched} chats`)
+
+    // After a delay, refresh the chat list to pick up new messages
+    setTimeout(() => {
+      const updatedChats = this.chatStore.getAll()
+      for (const chat of updatedChats) {
+        emitToRenderer('chat:update', {
+          accountId: this.accountId,
+          jid: chat.jid,
+          update: chat,
+        })
+      }
+    }, 5000)
+  }
 
   async fetchProfilePictures(force = false): Promise<void> {
     if (!this.socket) return
