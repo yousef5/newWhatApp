@@ -1,4 +1,5 @@
-import { ipcMain, BrowserWindow, session } from 'electron'
+import { ipcMain, BrowserWindow, session, dialog } from 'electron'
+import { readFileSync } from 'fs'
 import {
   loadConfig,
   updateSettings,
@@ -7,6 +8,7 @@ import {
   renameAccount,
   reorderAccounts,
   listAccounts,
+  setAccountAvatar,
 } from '../storage/config'
 import type { IPCCommands } from '@shared/types'
 
@@ -65,6 +67,31 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle('account:list', () => {
     return listAccounts()
+  })
+
+  ipcMain.handle('account:setAvatar', (_event, payload: IPCCommands['account:setAvatar']['payload']) => {
+    setAccountAvatar(payload.id, payload.avatar)
+  })
+
+  // ── Dialog handlers ──────────────────────────────────────────────────────
+
+  ipcMain.handle('dialog:pickImage', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return null
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Choose Avatar Image',
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
+      properties: ['openFile'],
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    const filePath = result.filePaths[0]
+    const buffer = readFileSync(filePath)
+    const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
+    const mimeMap: Record<string, string> = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      webp: 'image/webp', gif: 'image/gif',
+    }
+    return `data:${mimeMap[ext] || 'image/png'};base64,${buffer.toString('base64')}`
   })
 
   // ── Config handlers ────────────────────────────────────────────────────────

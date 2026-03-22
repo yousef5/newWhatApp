@@ -23,6 +23,14 @@ export default function App() {
         if (accountList.length > 0) {
           setActiveAccount(accountList[0].id)
         }
+        // Load custom avatars from saved config
+        const savedAvatars: Record<string, string> = {}
+        for (const acc of accountList) {
+          if (acc.customAvatar) savedAvatars[acc.id] = acc.customAvatar
+        }
+        if (Object.keys(savedAvatars).length > 0) {
+          setAvatars(savedAvatars)
+        }
       })
       .catch(console.error)
   }, [])
@@ -50,11 +58,50 @@ export default function App() {
   }, [])
 
   const handleNameUpdate = useCallback((accountId: string, name: string) => {
-    // Update account name from WhatsApp profile
     window.api.invoke('account:rename', { id: accountId, name }).catch(() => {})
     const updated = accounts.map(a => a.id === accountId ? { ...a, name } : a)
     setAccounts(updated)
   }, [accounts, setAccounts])
+
+  const handleRenameAccount = useCallback((id: string, name: string) => {
+    window.api.invoke('account:rename', { id, name }).catch(() => {})
+    setAccounts(accounts.map(a => a.id === id ? { ...a, name } : a))
+  }, [accounts, setAccounts])
+
+  const handleChangeAvatar = useCallback(async (id: string) => {
+    const dataUrl = await window.api.invoke('dialog:pickImage', undefined)
+    if (dataUrl) {
+      await window.api.invoke('account:setAvatar', { id, avatar: dataUrl })
+      setAvatars((prev) => ({ ...prev, [id]: dataUrl }))
+      // Also update the account object
+      setAccounts(accounts.map(a => a.id === id ? { ...a, customAvatar: dataUrl } : a))
+    }
+  }, [accounts, setAccounts])
+
+  const handleRemoveAvatar = useCallback(async (id: string) => {
+    await window.api.invoke('account:setAvatar', { id, avatar: null })
+    setAvatars((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setAccounts(accounts.map(a => a.id === id ? { ...a, customAvatar: undefined } : a))
+  }, [accounts, setAccounts])
+
+  const handleRemoveAccount = useCallback(async (id: string) => {
+    if (!confirm('Remove this account? The WhatsApp session will be deleted.')) return
+    await window.api.invoke('account:remove', { id })
+    const updated = await window.api.invoke('account:list', undefined)
+    setAccounts(updated)
+    setAvatars((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    if (activeAccountId === id) {
+      setActiveAccount(updated.length > 0 ? updated[0].id : null)
+    }
+  }, [accounts, activeAccountId, setAccounts, setActiveAccount])
 
   return (
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
@@ -102,6 +149,10 @@ export default function App() {
           onSwitchAccount={switchAccount}
           onAddAccount={handleAddAccount}
           onOpenSettings={() => setShowSettings(true)}
+          onRenameAccount={handleRenameAccount}
+          onChangeAvatar={handleChangeAvatar}
+          onRemoveAvatar={handleRemoveAvatar}
+          onRemoveAccount={handleRemoveAccount}
         />
 
         {accounts.length === 0 ? (

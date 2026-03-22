@@ -91,6 +91,15 @@ export function reorderAccounts(ids: string[]): void {
   saveConfig(config)
 }
 
+export function setAccountAvatar(id: string, avatar: string | null): void {
+  const config = loadConfig()
+  const account = config.accounts.find((a) => a.id === id)
+  if (account) {
+    account.customAvatar = avatar ?? undefined
+    saveConfig(config)
+  }
+}
+
 export function listAccounts(): Account[] {
   const config = loadConfig()
   return [...config.accounts].sort((a, b) => a.order - b.order)

@@ -4,6 +4,7 @@ export interface Account {
   id: string              // UUID v4
   name: string            // User-assigned label (e.g., "Personal", "Work")
   avatarColor: string     // Hex color for sidebar avatar
+  customAvatar?: string   // Base64 data URL for custom avatar image
   createdAt: string       // ISO 8601
   order: number           // Sidebar display order
 }
@@ -49,6 +50,8 @@ export type IPCCommands = {
   'account:rename': { payload: { id: string; name: string }; response: void }
   'account:reorder': { payload: { ids: string[] }; response: void }
   'account:list': { payload: void; response: Account[] }
+  'account:setAvatar': { payload: { id: string; avatar: string | null }; response: void }
+  'dialog:pickImage': { payload: void; response: string | null }
   'config:get': { payload: void; response: AppConfig }
   'config:update': { payload: { settings: Partial<AppSettings> }; response: void }
 }

@@ -8,15 +8,16 @@ interface AccountSidebarProps {
   onSwitchAccount: (id: string) => void
   onAddAccount: () => void
   onOpenSettings: () => void
+  onRenameAccount: (id: string, name: string) => void
+  onChangeAvatar: (id: string) => void
+  onRemoveAvatar: (id: string) => void
+  onRemoveAccount: (id: string) => void
 }
 
 export default function AccountSidebar({
-  accounts,
-  activeAccountId,
-  avatars,
-  onSwitchAccount,
-  onAddAccount,
-  onOpenSettings,
+  accounts, activeAccountId, avatars,
+  onSwitchAccount, onAddAccount, onOpenSettings,
+  onRenameAccount, onChangeAvatar, onRemoveAvatar, onRemoveAccount,
 }: AccountSidebarProps) {
   return (
     <div className="w-[62px] bg-bg-sidebar border-r-2 border-border-secondary flex flex-col items-center py-3 shrink-0">
@@ -34,6 +35,10 @@ export default function AccountSidebar({
             isActive={account.id === activeAccountId}
             avatar={avatars[account.id]}
             onClick={() => onSwitchAccount(account.id)}
+            onRename={onRenameAccount}
+            onChangeAvatar={onChangeAvatar}
+            onRemoveAvatar={onRemoveAvatar}
+            onRemoveAccount={onRemoveAccount}
           />
         ))}
       </div>
