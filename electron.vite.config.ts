@@ -1,5 +1,7 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/postcss'
+import autoprefixer from 'autoprefixer'
 import { resolve } from 'path'
 
 export default defineConfig({
@@ -36,6 +38,14 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: resolve(__dirname, 'src/index.html')
+      }
+    },
+    css: {
+      postcss: {
+        plugins: [
+          tailwindcss(),
+          autoprefixer(),
+        ]
       }
     },
     resolve: {
