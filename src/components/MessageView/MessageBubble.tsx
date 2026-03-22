@@ -1,10 +1,13 @@
 import type { Message } from '@shared/types'
 import { formatFullTime, formatFileSize } from '@/lib/utils'
 import FileImage from '@/components/shared/FileImage'
+import Avatar from '@/components/shared/Avatar'
 
 interface MessageBubbleProps {
   message: Message
   showSender?: boolean
+  showAvatar?: boolean
+  senderAvatarPath?: string | null
   onRetry?: (message: Message) => void
 }
 
@@ -21,7 +24,7 @@ function StatusIcon({ status }: { status: Message['status'] }) {
 
 function displaySender(jid: string | null): string {
   if (!jid) return 'Unknown'
-  if (!jid.includes('@')) return jid // Already a resolved name
+  if (!jid.includes('@')) return jid
   const raw = jid.split('@')[0]
   if (/^\d+$/.test(raw) && raw.length >= 10) {
     if (raw.startsWith('20')) return '+20 ' + raw.slice(2, 5) + ' ' + raw.slice(5, 8) + ' ' + raw.slice(8)
@@ -30,23 +33,36 @@ function displaySender(jid: string | null): string {
   return raw
 }
 
-export default function MessageBubble({ message, showSender, onRetry }: MessageBubbleProps) {
+export default function MessageBubble({ message, showSender, showAvatar, senderAvatarPath, onRetry }: MessageBubbleProps) {
   const isOutgoing = message.isFromMe
   const isFailed = message.status === 'failed'
+  const senderName = displaySender(message.senderJid)
 
   return (
-    <div className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'} px-4 py-[2px]`}>
+    <div className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'} px-4 py-[3px]`}>
+      {/* Sender avatar (incoming only) */}
+      {!isOutgoing && showAvatar && (
+        <div className="mr-2 mt-auto mb-1 shrink-0">
+          <Avatar
+            filePath={senderAvatarPath}
+            name={senderName}
+            jid={message.senderJid || undefined}
+            size={28}
+          />
+        </div>
+      )}
+
       <div
-        className={`relative max-w-[75%] min-w-[80px] px-2.5 py-1.5 border-2 ${
+        className={`relative max-w-[70%] min-w-[80px] px-2.5 py-1.5 border-2 ${
           isOutgoing
             ? 'bg-bubble-outgoing text-white border-accent-purple'
             : 'bg-bubble-incoming border-border-secondary text-text-primary'
         } ${isFailed ? 'opacity-60' : ''}`}
       >
-        {/* Sender name for group chats */}
+        {/* Sender name */}
         {showSender && !isOutgoing && message.senderJid && (
           <div className="text-[11px] text-accent-purple font-bold mb-0.5 font-mono">
-            {displaySender(message.senderJid)}
+            {senderName}
           </div>
         )}
 
@@ -57,7 +73,7 @@ export default function MessageBubble({ message, showSender, onRetry }: MessageB
           </div>
         )}
 
-        {/* Document card */}
+        {/* Document */}
         {message.type === 'document' && (
           <div className="flex items-center gap-2 bg-black/20 px-3 py-2 mb-1.5 border border-border-primary">
             <div className="w-8 h-8 bg-accent-blue flex items-center justify-center text-[9px] text-white font-bold shrink-0 font-mono">DOC</div>
@@ -82,34 +98,22 @@ export default function MessageBubble({ message, showSender, onRetry }: MessageB
         {/* Video */}
         {message.type === 'video' && (
           <div className="mb-1.5 overflow-hidden border border-border-primary">
-            {message.mediaPath ? (
-              <video
-                src={`localfile://${message.mediaPath}`}
-                controls
-                className="max-w-full max-h-64"
-                preload="metadata"
-              />
-            ) : (
-              <div className="w-48 h-32 bg-black/20 flex items-center justify-center text-text-muted text-xs font-mono">
-                VIDEO
-              </div>
-            )}
+            <FileImage
+              filePath={message.thumbnailPath || message.mediaPath}
+              className="max-w-full max-h-48 object-cover"
+              fallback="VIDEO"
+            />
           </div>
         )}
 
         {/* Audio */}
         {message.type === 'audio' && (
-          <div className="mb-1.5">
-            {message.mediaPath ? (
-              <audio controls className="h-8 max-w-full" preload="metadata">
-                <source src={`localfile://${message.mediaPath}`} />
-              </audio>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-accent-green flex items-center justify-center text-white text-xs shrink-0">&#9654;</div>
-                <div className="flex-1 h-1 bg-white/20"><div className="h-1 bg-white/50 w-0" /></div>
-              </div>
-            )}
+          <div className="mb-1.5 flex items-center gap-2 py-1">
+            <div className="w-8 h-8 bg-accent-green flex items-center justify-center text-white text-xs shrink-0">&#9654;</div>
+            <div className="flex-1">
+              <div className="h-1 bg-white/20"><div className="h-1 bg-white/50 w-1/3" /></div>
+              <div className="text-[9px] text-text-muted font-mono mt-1">VOICE NOTE</div>
+            </div>
           </div>
         )}
 
@@ -122,7 +126,7 @@ export default function MessageBubble({ message, showSender, onRetry }: MessageB
           />
         )}
 
-        {/* Text content */}
+        {/* Text */}
         {message.content && message.type !== 'document' && (
           <p className={`text-[13px] leading-[1.4] whitespace-pre-wrap break-words ${isOutgoing ? 'text-white' : 'text-text-primary'}`}>
             {message.content}

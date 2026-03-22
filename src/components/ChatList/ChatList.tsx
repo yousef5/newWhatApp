@@ -37,10 +37,10 @@ export default function ChatList({ accountId }: ChatListProps) {
         const messages = await window.api.invoke('chat:load', {
           accountId,
           jid,
-          limit: 50,
+          limit: 200,
         })
         useMessagesStore.getState().setMessages(messages)
-        useMessagesStore.getState().setHasMore(messages.length === 50)
+        useMessagesStore.getState().setHasMore(messages.length >= 200)
 
         await window.api.invoke('chat:markRead', { accountId, jid })
         useChatsStore.getState().updateChat(jid, { unreadCount: 0 })
