@@ -18,6 +18,7 @@ export default function AccountAvatar({
   onRename, onChangeAvatar, onRemoveAvatar, onRemoveAccount,
 }: AccountAvatarProps) {
   const [showMenu, setShowMenu] = useState(false)
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(account.name)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -28,6 +29,7 @@ export default function AccountAvatar({
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
+    setMenuPos({ x: e.clientX, y: e.clientY })
     setShowMenu(true)
   }
 
@@ -117,7 +119,10 @@ export default function AccountAvatar({
       {showMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-          <div className="absolute left-12 top-0 z-50 bg-bg-secondary border-2 border-border-secondary py-1 min-w-[140px] shadow-lg">
+          <div
+            className="fixed z-50 bg-bg-secondary border-2 border-border-secondary py-1 min-w-[160px]"
+            style={{ left: menuPos.x, top: menuPos.y }}
+          >
             <button
               onClick={handleRename}
               className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary"
