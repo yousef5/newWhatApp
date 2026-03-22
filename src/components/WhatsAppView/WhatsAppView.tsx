@@ -3,26 +3,64 @@ import { useRef, useEffect, useCallback } from 'react'
 interface WhatsAppViewProps {
   accountId: string
   isActive: boolean
-  onThumbnail?: (accountId: string, dataUrl: string) => void
+  onAvatarUpdate?: (accountId: string, dataUrl: string) => void
+  onNameUpdate?: (accountId: string, name: string) => void
 }
 
-export default function WhatsAppView({ accountId, isActive, onThumbnail }: WhatsAppViewProps) {
+export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNameUpdate }: WhatsAppViewProps) {
   const webviewRef = useRef<any>(null)
-  const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const extractIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const captureScreenshot = useCallback(() => {
+  const extractProfileInfo = useCallback(() => {
     const webview = webviewRef.current
-    if (!webview || !onThumbnail) return
-    try {
-      webview.capturePage().then((image: any) => {
-        if (image && !image.isEmpty()) {
-          const resized = image.resize({ width: 120, quality: 'low' })
-          const dataUrl = resized.toDataURL()
-          if (dataUrl) onThumbnail(accountId, dataUrl)
+    if (!webview) return
+
+    // Extract the user's own profile picture from WhatsApp Web
+    webview.executeJavaScript(`
+      (function() {
+        try {
+          // Try to get the profile avatar from the header/sidebar
+          const avatarImg = document.querySelector('header img[draggable="false"]')
+            || document.querySelector('[data-testid="default-user"] img')
+            || document.querySelector('img[alt][draggable="false"]')
+            || document.querySelector('._aigv img') // WhatsApp Web avatar class
+            || document.querySelector('header span[data-icon] + div img')
+
+          let avatarUrl = null
+          if (avatarImg && avatarImg.src && avatarImg.src.startsWith('blob:')) {
+            // Convert blob URL to data URL
+            return fetch(avatarImg.src)
+              .then(r => r.blob())
+              .then(blob => new Promise((resolve) => {
+                const reader = new FileReader()
+                reader.onload = () => resolve({ avatar: reader.result, name: null })
+                reader.readAsDataURL(blob)
+              }))
+          } else if (avatarImg && avatarImg.src && !avatarImg.src.startsWith('data:image/gif')) {
+            avatarUrl = avatarImg.src
+          }
+
+          // Try to get the user's name
+          const nameEl = document.querySelector('[data-testid="chatlist-header-profile-btn"] span')
+            || document.querySelector('header span[dir="auto"]')
+
+          return Promise.resolve({
+            avatar: avatarUrl,
+            name: nameEl ? nameEl.textContent : null,
+          })
+        } catch(e) {
+          return Promise.resolve({ avatar: null, name: null })
         }
-      }).catch(() => {})
-    } catch {}
-  }, [accountId, onThumbnail])
+      })()
+    `).then((result: any) => {
+      if (result?.avatar && onAvatarUpdate) {
+        onAvatarUpdate(accountId, result.avatar)
+      }
+      if (result?.name && onNameUpdate) {
+        onNameUpdate(accountId, result.name)
+      }
+    }).catch(() => {})
+  }, [accountId, onAvatarUpdate, onNameUpdate])
 
   useEffect(() => {
     const webview = webviewRef.current
@@ -34,36 +72,32 @@ export default function WhatsAppView({ accountId, isActive, onThumbnail }: Whats
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; }
       `)
-      // Capture initial screenshot after page loads
-      setTimeout(captureScreenshot, 3000)
+      // Try extracting profile after page loads (with delays for WA to render)
+      setTimeout(extractProfileInfo, 5000)
+      setTimeout(extractProfileInfo, 10000)
+      setTimeout(extractProfileInfo, 20000)
     }
 
     webview.addEventListener('dom-ready', handleDomReady)
     return () => webview.removeEventListener('dom-ready', handleDomReady)
-  }, [captureScreenshot])
+  }, [extractProfileInfo])
 
-  // Capture screenshot periodically when active
+  // Periodically try to extract profile info
   useEffect(() => {
     if (isActive) {
-      // Capture when switching to this account
-      setTimeout(captureScreenshot, 500)
-      // Then every 30 seconds
-      captureIntervalRef.current = setInterval(captureScreenshot, 30000)
+      extractIntervalRef.current = setInterval(extractProfileInfo, 60000)
     } else {
-      // Capture one last screenshot when switching away
-      captureScreenshot()
-      if (captureIntervalRef.current) {
-        clearInterval(captureIntervalRef.current)
-        captureIntervalRef.current = null
+      if (extractIntervalRef.current) {
+        clearInterval(extractIntervalRef.current)
+        extractIntervalRef.current = null
       }
     }
     return () => {
-      if (captureIntervalRef.current) {
-        clearInterval(captureIntervalRef.current)
-        captureIntervalRef.current = null
+      if (extractIntervalRef.current) {
+        clearInterval(extractIntervalRef.current)
       }
     }
-  }, [isActive, captureScreenshot])
+  }, [isActive, extractProfileInfo])
 
   return (
     <webview

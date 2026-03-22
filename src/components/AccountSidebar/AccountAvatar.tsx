@@ -4,11 +4,11 @@ import { getInitials } from '@/lib/utils'
 interface AccountAvatarProps {
   account: Account
   isActive: boolean
-  thumbnail?: string | null
+  avatar?: string | null
   onClick: () => void
 }
 
-export default function AccountAvatar({ account, isActive, thumbnail, onClick }: AccountAvatarProps) {
+export default function AccountAvatar({ account, isActive, avatar, onClick }: AccountAvatarProps) {
   return (
     <button
       onClick={onClick}
@@ -17,18 +17,21 @@ export default function AccountAvatar({ account, isActive, thumbnail, onClick }:
           ? 'border-2 border-accent-purple'
           : 'border-2 border-transparent hover:border-border-secondary'
       }`}
+      style={{ borderRadius: '50%' }}
       title={account.name}
     >
-      {thumbnail ? (
+      {avatar ? (
         <img
-          src={thumbnail}
+          src={avatar}
           alt={account.name}
           className="w-full h-full object-cover"
+          style={{ borderRadius: '50%' }}
         />
       ) : (
         <div
           className="w-full h-full flex items-center justify-center text-sm font-bold font-mono"
           style={{
+            borderRadius: '50%',
             backgroundColor: isActive ? account.avatarColor : '#141414',
             color: isActive ? '#fff' : '#888888',
           }}

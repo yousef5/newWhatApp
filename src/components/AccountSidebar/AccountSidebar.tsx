@@ -4,7 +4,7 @@ import AccountAvatar from './AccountAvatar'
 interface AccountSidebarProps {
   accounts: Account[]
   activeAccountId: string | null
-  thumbnails: Record<string, string>
+  avatars: Record<string, string>
   onSwitchAccount: (id: string) => void
   onAddAccount: () => void
   onOpenSettings: () => void
@@ -13,7 +13,7 @@ interface AccountSidebarProps {
 export default function AccountSidebar({
   accounts,
   activeAccountId,
-  thumbnails,
+  avatars,
   onSwitchAccount,
   onAddAccount,
   onOpenSettings,
@@ -32,7 +32,7 @@ export default function AccountSidebar({
             key={account.id}
             account={account}
             isActive={account.id === activeAccountId}
-            thumbnail={thumbnails[account.id]}
+            avatar={avatars[account.id]}
             onClick={() => onSwitchAccount(account.id)}
           />
         ))}

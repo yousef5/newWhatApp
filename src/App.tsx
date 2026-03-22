@@ -12,7 +12,7 @@ export default function App() {
   const setActiveAccount = useAccountsStore((s) => s.setActiveAccount)
 
   const [showSettings, setShowSettings] = useState(false)
-  const [thumbnails, setThumbnails] = useState<Record<string, string>>({})
+  const [avatars, setAvatars] = useState<Record<string, string>>({})
 
   // Load accounts on mount
   useEffect(() => {
@@ -45,9 +45,16 @@ export default function App() {
     [setActiveAccount]
   )
 
-  const handleThumbnail = useCallback((accountId: string, dataUrl: string) => {
-    setThumbnails((prev) => ({ ...prev, [accountId]: dataUrl }))
+  const handleAvatarUpdate = useCallback((accountId: string, dataUrl: string) => {
+    setAvatars((prev) => ({ ...prev, [accountId]: dataUrl }))
   }, [])
+
+  const handleNameUpdate = useCallback((accountId: string, name: string) => {
+    // Update account name from WhatsApp profile
+    window.api.invoke('account:rename', { id: accountId, name }).catch(() => {})
+    const updated = accounts.map(a => a.id === accountId ? { ...a, name } : a)
+    setAccounts(updated)
+  }, [accounts, setAccounts])
 
   return (
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
@@ -91,7 +98,7 @@ export default function App() {
         <AccountSidebar
           accounts={accounts}
           activeAccountId={activeAccountId}
-          thumbnails={thumbnails}
+          avatars={avatars}
           onSwitchAccount={switchAccount}
           onAddAccount={handleAddAccount}
           onOpenSettings={() => setShowSettings(true)}
@@ -109,7 +116,8 @@ export default function App() {
                 key={account.id}
                 accountId={account.id}
                 isActive={account.id === activeAccountId}
-                onThumbnail={handleThumbnail}
+                onAvatarUpdate={handleAvatarUpdate}
+                onNameUpdate={handleNameUpdate}
               />
             ))}
           </div>
