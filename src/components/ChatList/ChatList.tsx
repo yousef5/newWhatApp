@@ -16,25 +16,23 @@ export default function ChatList({ accountId }: ChatListProps) {
   const activeChatJid = useChatsStore((s) => s.activeChatJid)
 
   const filteredChats = useMemo(() => {
-    let result = chats
+    let result = chats.filter((c) => !c.archived)
     if (filter === 'unread') result = result.filter((c) => c.unreadCount > 0)
     else if (filter === 'groups') result = result.filter((c) => c.isGroup)
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       result = result.filter((c) => c.name?.toLowerCase().includes(q))
     }
-    return result
+    return result.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return (b.lastMessageTimestamp ?? 0) - (a.lastMessageTimestamp ?? 0)
+    })
   }, [chats, filter, searchQuery])
-  const setActiveChat = useChatsStore((s) => s.setActiveChat)
-  const clearMessages = useMessagesStore((s) => s.clear)
-  const setMessages = useMessagesStore((s) => s.setMessages)
-  const setHasMore = useMessagesStore((s) => s.setHasMore)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleChatClick = useCallback(
     async (jid: string) => {
-      setActiveChat(jid)
-      clearMessages()
+      useChatsStore.getState().setActiveChat(jid)
+      useMessagesStore.getState().clear()
 
       try {
         const messages = await window.api.invoke('chat:load', {
@@ -42,17 +40,16 @@ export default function ChatList({ accountId }: ChatListProps) {
           jid,
           limit: 50,
         })
-        setMessages(messages)
-        setHasMore(messages.length === 50)
+        useMessagesStore.getState().setMessages(messages)
+        useMessagesStore.getState().setHasMore(messages.length === 50)
 
-        // Mark as read
         await window.api.invoke('chat:markRead', { accountId, jid })
         useChatsStore.getState().updateChat(jid, { unreadCount: 0 })
       } catch (err) {
         console.error('Failed to load chat messages:', err)
       }
     },
-    [accountId, setActiveChat, clearMessages, setMessages, setHasMore]
+    [accountId]
   )
 
   const Row = useCallback(
@@ -75,11 +72,9 @@ export default function ChatList({ accountId }: ChatListProps) {
     <div className="w-[280px] bg-bg-secondary border-r border-border-primary flex flex-col shrink-0">
       <ChatListHeader accountId={accountId} />
 
-      {/* Virtualized chat list */}
-      <div ref={containerRef} className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0">
         {filteredChats.length > 0 ? (
           <AutoSizedList
-            containerRef={containerRef}
             itemCount={filteredChats.length}
             itemSize={64}
             Row={Row}
@@ -94,25 +89,22 @@ export default function ChatList({ accountId }: ChatListProps) {
   )
 }
 
-/**
- * Wraps react-window FixedSizeList to auto-fill available height from a parent ref.
- */
 function AutoSizedList({
-  containerRef,
   itemCount,
   itemSize,
   Row,
 }: {
-  containerRef: React.RefObject<HTMLDivElement | null>
   itemCount: number
   itemSize: number
   Row: React.ComponentType<{ index: number; style: React.CSSProperties }>
 }) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(400)
 
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
+    setHeight(el.clientHeight)
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setHeight(entry.contentRect.height)
@@ -120,16 +112,18 @@ function AutoSizedList({
     })
     observer.observe(el)
     return () => observer.disconnect()
-  }, [containerRef])
+  }, [])
 
   return (
-    <List
-      height={height}
-      itemCount={itemCount}
-      itemSize={itemSize}
-      width="100%"
-    >
-      {Row}
-    </List>
+    <div ref={containerRef} style={{ height: '100%' }}>
+      <List
+        height={height}
+        itemCount={itemCount}
+        itemSize={itemSize}
+        width="100%"
+      >
+        {Row}
+      </List>
+    </div>
   )
 }
