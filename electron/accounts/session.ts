@@ -480,15 +480,16 @@ export class BaileysSession extends EventEmitter {
 
     const chatJid = msg.key.remoteJid
     const isFromMe = !!msg.key.fromMe
-    const rawSenderJid = isFromMe ? null : (msg.key.participant ?? chatJid)
-    // Resolve sender name: try contact store, then pushName, then JID
-    let senderJid = rawSenderJid
-    if (rawSenderJid) {
-      const contact = this.contactStore.getContact(rawSenderJid)
-      if (contact?.name) {
-        senderJid = contact.name
-      } else if ((msg as any).pushName) {
-        senderJid = (msg as any).pushName
+    const senderJid = isFromMe ? null : (msg.key.participant ?? chatJid)
+
+    // Store pushName as contact if we don't have a name for this sender yet
+    if (senderJid && (msg as any).pushName) {
+      const existing = this.contactStore.getContact(senderJid)
+      if (!existing || !existing.name) {
+        this.contactStore.upsertContact({
+          jid: senderJid,
+          name: (msg as any).pushName,
+        })
       }
     }
     const timestamp = typeof msg.messageTimestamp === 'number'

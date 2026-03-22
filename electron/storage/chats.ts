@@ -10,16 +10,29 @@ export class ChatStore {
 
   getAll(): Chat[] {
     const rows = this.db.prepare(`
-      SELECT * FROM chats
-      WHERE archived = 0
-        AND jid != 'status@broadcast'
-      ORDER BY pinned DESC, last_message_timestamp DESC
+      SELECT
+        c.*,
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name
+      FROM chats c
+      LEFT JOIN contacts ct ON c.jid = ct.jid
+      LEFT JOIN group_metadata gm ON c.jid = gm.jid
+      WHERE c.archived = 0
+        AND c.jid != 'status@broadcast'
+      ORDER BY c.pinned DESC, c.last_message_timestamp DESC
     `).all() as any[]
     return rows.map(this.mapRow)
   }
 
   get(jid: string): Chat | null {
-    const row = this.db.prepare('SELECT * FROM chats WHERE jid = ?').get(jid) as any
+    const row = this.db.prepare(`
+      SELECT
+        c.*,
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name
+      FROM chats c
+      LEFT JOIN contacts ct ON c.jid = ct.jid
+      LEFT JOIN group_metadata gm ON c.jid = gm.jid
+      WHERE c.jid = ?
+    `).get(jid) as any
     return row ? this.mapRow(row) : null
   }
 
@@ -68,7 +81,7 @@ export class ChatStore {
   private mapRow(row: any): Chat {
     return {
       jid: row.jid,
-      name: row.name,
+      name: row.resolved_name ?? row.name,
       isGroup: !!row.is_group,
       unreadCount: row.unread_count,
       lastMessageTimestamp: row.last_message_timestamp,

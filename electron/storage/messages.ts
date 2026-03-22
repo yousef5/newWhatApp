@@ -9,15 +9,19 @@ export class MessageStore {
   }
 
   getForChat(chatJid: string, before?: number, limit = 50): Message[] {
-    let query = 'SELECT * FROM messages WHERE chat_jid = ?'
+    let query = `
+      SELECT m.*, COALESCE(ct.name, ct.saved_name) as sender_name
+      FROM messages m
+      LEFT JOIN contacts ct ON m.sender_jid = ct.jid
+      WHERE m.chat_jid = ?`
     const params: any[] = [chatJid]
 
     if (before) {
-      query += ' AND timestamp < ?'
+      query += ' AND m.timestamp < ?'
       params.push(before)
     }
 
-    query += ' ORDER BY timestamp DESC LIMIT ?'
+    query += ' ORDER BY m.timestamp DESC LIMIT ?'
     params.push(limit)
 
     const rows = this.db.prepare(query).all(...params) as any[]
@@ -99,7 +103,7 @@ export class MessageStore {
     return {
       id: row.id,
       chatJid: row.chat_jid,
-      senderJid: row.sender_jid,
+      senderJid: row.sender_name || row.sender_jid,
       timestamp: row.timestamp,
       type: row.type,
       content: row.content,
