@@ -133,7 +133,14 @@ export function useAccounts() {
   useIPCEvent('chat:update', (data) => {
     const state = useAccountsStore.getState()
     if (data.accountId === state.activeAccountId) {
-      updateChat(data.jid, data.update)
+      const chatState = useChatsStore.getState()
+      const existing = chatState.chats.find(c => c.jid === data.jid)
+      if (existing) {
+        updateChat(data.jid, data.update)
+      } else {
+        // New chat from history sync — add it to the list
+        setChats([...chatState.chats, data.update as import('@shared/types').Chat])
+      }
     }
   })
 

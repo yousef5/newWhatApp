@@ -292,6 +292,72 @@ export class BaileysSession extends EventEmitter {
         })
       }
     })
+
+    // --- messaging-history.set (bulk history sync on first connect) ---
+    socket.ev.on('messaging-history.set', ({ chats, contacts, messages, isLatest }) => { try {
+      console.log(`[${this.accountId}] History sync: ${chats.length} chats, ${contacts.length} contacts, ${messages.length} messages`)
+
+      // Upsert all chats
+      for (const chat of chats) {
+        this.chatStore.upsert({
+          jid: chat.id,
+          name: chat.name ?? undefined,
+          isGroup: chat.id.endsWith('@g.us'),
+          unreadCount: chat.unreadCount ?? 0,
+          lastMessageTimestamp: typeof chat.conversationTimestamp === 'number'
+            ? chat.conversationTimestamp
+            : typeof chat.conversationTimestamp === 'object' && chat.conversationTimestamp
+              ? Number(chat.conversationTimestamp.low || chat.conversationTimestamp)
+              : undefined,
+          pinned: chat.pinned ? true : false,
+          archived: chat.archived ? true : false,
+        })
+      }
+
+      // Upsert all contacts
+      for (const contact of contacts) {
+        this.contactStore.upsertContact({
+          jid: contact.id,
+          name: contact.name ?? contact.notify ?? null,
+        })
+        // Also update chat name from contact
+        if (contact.name || contact.notify) {
+          const existingChat = this.chatStore.get(contact.id)
+          if (existingChat && !existingChat.name) {
+            this.chatStore.upsert({
+              jid: contact.id,
+              name: contact.name || contact.notify || undefined,
+            })
+          }
+        }
+      }
+
+      // Upsert all messages
+      for (const msg of messages) {
+        const parsed = this.parseMessage(msg)
+        if (!parsed) continue
+
+        // Ensure chat exists
+        this.chatStore.upsert({
+          jid: parsed.chatJid,
+          isGroup: parsed.chatJid.endsWith('@g.us'),
+          lastMessageTimestamp: parsed.timestamp,
+          lastMessagePreview: parsed.content?.substring(0, 100) || `[${parsed.type}]`,
+        })
+
+        this.messageStore.insert(parsed)
+      }
+
+      // Notify renderer to refresh chat list
+      const allChats = this.chatStore.getAll()
+      for (const chat of allChats) {
+        emitToRenderer('chat:update', {
+          accountId: this.accountId,
+          jid: chat.jid,
+          update: chat,
+        })
+      }
+    } catch (e) { console.error('messaging-history.set error:', e) } })
   }
 
   disconnect(): void {
