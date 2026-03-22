@@ -22,10 +22,9 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
   const isLoadingOlderRef = useRef(false)
   const initialScrollDone = useRef(false)
 
-  // Cache sender contacts for avatars in groups
   const [senderContacts, setSenderContacts] = useState<Record<string, Contact | null>>({})
 
-  // Load sender contact info for all incoming messages
+  // Load sender contacts
   useEffect(() => {
     const unknownSenders = new Set<string>()
     for (const msg of messages) {
@@ -33,7 +32,6 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
         unknownSenders.add(msg.senderJid)
       }
     }
-    // For DM chats, also look up the chat JID as the sender
     if (!isGroup && !senderContacts[chatJid]) {
       unknownSenders.add(chatJid)
     }
@@ -45,14 +43,12 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       )
     ).then(results => {
       const updates: Record<string, Contact | null> = {}
-      for (const [jid, contact] of results) {
-        updates[jid] = contact
-      }
+      for (const [jid, contact] of results) updates[jid] = contact
       setSenderContacts(prev => ({ ...prev, ...updates }))
     })
   }, [accountId, isGroup, chatJid, messages.length])
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom
   useEffect(() => {
     if (isLoadingOlderRef.current) {
       isLoadingOlderRef.current = false
@@ -66,17 +62,15 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
   useEffect(() => {
     initialScrollDone.current = false
     setSenderContacts({})
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'auto' })
-    }, 50)
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 50)
   }, [chatJid])
 
-  // Load older messages on scroll to top
+  // Scroll to top → load older messages from local DB
   const handleScroll = useCallback(async () => {
     const el = scrollRef.current
     if (!el || loading || !hasMore) return
 
-    if (el.scrollTop < 150) {
+    if (el.scrollTop < 200) {
       const oldestMessage = messages[0]
       if (!oldestMessage) return
 
@@ -85,8 +79,7 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       const prevScrollHeight = el.scrollHeight
 
       try {
-        // First try local DB
-        let olderMessages = await window.api.invoke('chat:load', {
+        const olderMessages = await window.api.invoke('chat:load', {
           accountId,
           jid: chatJid,
           before: oldestMessage.timestamp,
@@ -100,41 +93,8 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
           })
         }
 
-        // If not enough local messages, request from server
-        if (olderMessages.length < 10) {
-          await (window.api as any).invoke('chat:fetchHistory', { accountId, jid: chatJid, count: 50 })
-
-          // Poll for new messages arriving
-          for (let i = 0; i < 5; i++) {
-            await new Promise(r => setTimeout(r, 2000))
-            if (useChatsStore.getState().activeChatJid !== chatJid) break
-
-            const newMsgs = await window.api.invoke('chat:load', {
-              accountId,
-              jid: chatJid,
-              before: oldestMessage.timestamp,
-              limit: 50,
-            })
-
-            if (newMsgs.length > olderMessages.length) {
-              // Got new messages — prepend the ones we don't have
-              const existingIds = new Set(useMessagesStore.getState().messages.map(m => m.id))
-              const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
-              if (trulyNew.length > 0) {
-                const newPrevScrollHeight = el.scrollHeight
-                useMessagesStore.getState().prependMessages(trulyNew)
-                requestAnimationFrame(() => {
-                  if (el) el.scrollTop = el.scrollHeight - newPrevScrollHeight
-                })
-              }
-              olderMessages = newMsgs
-              break
-            }
-          }
-
-          if (olderMessages.length === 0) {
-            useMessagesStore.getState().setHasMore(false)
-          }
+        if (olderMessages.length < 50) {
+          useMessagesStore.getState().setHasMore(false)
         }
       } catch (err) {
         console.error('Failed to load older messages:', err)
@@ -157,32 +117,21 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
     }
   }
 
-  // Check if sender changed (to show avatar only on first message of a group)
-  function shouldShowAvatar(msg: Message, idx: number, group: Message[]): boolean {
-    if (msg.isFromMe || !isGroup) return false
-    if (idx === 0) return true
-    return group[idx - 1].senderJid !== msg.senderJid || group[idx - 1].isFromMe
-  }
-
   return (
     <div
       ref={scrollRef}
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto scrollbar-thin"
     >
-      {/* Load more indicator */}
-      {hasMore && (
+      {/* Load more */}
+      {loading && (
         <div className="flex justify-center py-3">
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-accent-purple border-t-transparent animate-spin" />
-          ) : (
-            <button
-              onClick={handleScroll}
-              className="text-[10px] text-accent-purple font-mono uppercase font-bold border border-accent-purple px-3 py-1 hover:bg-accent-purple hover:text-white cursor-pointer"
-            >
-              LOAD OLDER MESSAGES
-            </button>
-          )}
+          <div className="w-5 h-5 border-2 border-accent-purple border-t-transparent animate-spin" />
+        </div>
+      )}
+      {!hasMore && messages.length > 0 && (
+        <div className="text-center py-3">
+          <span className="text-text-muted text-[10px] font-mono uppercase">NO MORE MESSAGES</span>
         </div>
       )}
 
@@ -199,12 +148,8 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
 
           {group.messages.map((msg) => {
             const isIncoming = !msg.isFromMe
-            // For avatar: use sender's contact, or for DMs use the chat contact
             const senderJid = msg.senderJid
-            let avatarContact = senderJid && senderJid.includes('@')
-              ? senderContacts[senderJid]
-              : null
-            // For DM chats, use chat JID contact for avatar
+            let avatarContact = senderJid && senderJid.includes('@') ? senderContacts[senderJid] : null
             if (!avatarContact && !isGroup && isIncoming) {
               avatarContact = senderContacts[chatJid] ?? null
             }

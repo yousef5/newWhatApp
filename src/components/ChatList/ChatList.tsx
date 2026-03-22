@@ -41,42 +41,13 @@ export default function ChatList({ accountId }: ChatListProps) {
       useMessagesStore.getState().clear()
 
       try {
-        useMessagesStore.getState().setLoading(true)
-
-        // Load from local DB first
-        let messages = await window.api.invoke('chat:load', {
+        const messages = await window.api.invoke('chat:load', {
           accountId,
           jid,
-          limit: 200,
+          limit: 100,
         })
-
-        // Show what we have immediately
-        if (messages.length > 0) {
-          useMessagesStore.getState().setMessages(messages)
-          useMessagesStore.getState().setLoading(false)
-        }
-
-        // If no or few local messages, request from WhatsApp server and poll
-        if (messages.length < 5) {
-          await (window.api as any).invoke('chat:fetchHistory', { accountId, jid, count: 50 })
-
-          // Poll every 2 seconds for up to 15 seconds
-          for (let i = 0; i < 7; i++) {
-            await new Promise(r => setTimeout(r, 2000))
-            // Check if we're still viewing this chat
-            if (useChatsStore.getState().activeChatJid !== jid) break
-            const newMessages = await window.api.invoke('chat:load', { accountId, jid, limit: 200 })
-            if (newMessages.length > messages.length) {
-              messages = newMessages
-              useMessagesStore.getState().setMessages(messages)
-            }
-            if (messages.length >= 5) break
-          }
-        }
-
         useMessagesStore.getState().setMessages(messages)
-        useMessagesStore.getState().setHasMore(messages.length >= 200)
-        useMessagesStore.getState().setLoading(false)
+        useMessagesStore.getState().setHasMore(true) // Always allow scroll-to-load
 
         await window.api.invoke('chat:markRead', { accountId, jid })
         useChatsStore.getState().updateChat(jid, { unreadCount: 0 })
