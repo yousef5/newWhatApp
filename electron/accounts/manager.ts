@@ -154,7 +154,13 @@ class AccountManager {
       const account = config.accounts[i]
       const session = new BaileysSession(account.id)
       this.sessions.set(account.id, session)
-      await session.connect()
+
+      try {
+        await session.connect()
+      } catch (err) {
+        console.error(`Failed to connect account ${account.id} (${account.name}):`, err)
+        // Continue to next account instead of failing all
+      }
 
       // Stagger connections by 2 seconds between accounts
       if (i < config.accounts.length - 1) {

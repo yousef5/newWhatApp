@@ -7,15 +7,26 @@ interface QRLoginProps {
   onConnected: () => void
 }
 
-type QRState = 'loading' | 'qr' | 'connected'
+type QRState = 'loading' | 'qr' | 'expired' | 'connected'
+
+const QR_EXPIRY_MS = 60_000 // 60 seconds
 
 export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
   const [state, setState] = useState<QRState>('loading')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const connectedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const expiryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestAccountIdRef = useRef<string | null>(null)
 
   // Listen for QR codes
   useIPCEvent('account:qr', (data) => {
+    latestAccountIdRef.current = data.accountId
+
+    // Clear any existing expiry timer
+    if (expiryTimerRef.current) {
+      clearTimeout(expiryTimerRef.current)
+    }
+
     QRCode.toDataURL(data.qr, {
       width: 280,
       margin: 2,
@@ -27,6 +38,11 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
       .then((url) => {
         setQrDataUrl(url)
         setState('qr')
+
+        // Start QR expiry timer
+        expiryTimerRef.current = setTimeout(() => {
+          setState('expired')
+        }, QR_EXPIRY_MS)
       })
       .catch(console.error)
   })
@@ -34,6 +50,9 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
   // Listen for connection success
   useIPCEvent('account:connection', (data) => {
     if (data.state === 'open') {
+      if (expiryTimerRef.current) {
+        clearTimeout(expiryTimerRef.current)
+      }
       setState('connected')
       connectedTimerRef.current = setTimeout(() => {
         onConnected()
@@ -41,14 +60,25 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
     }
   })
 
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (connectedTimerRef.current) {
         clearTimeout(connectedTimerRef.current)
       }
+      if (expiryTimerRef.current) {
+        clearTimeout(expiryTimerRef.current)
+      }
     }
   }, [])
+
+  const handleRefresh = () => {
+    setState('loading')
+    setQrDataUrl(null)
+    if (latestAccountIdRef.current) {
+      window.api.invoke('account:reconnect', { id: latestAccountIdRef.current }).catch(console.error)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
@@ -86,6 +116,25 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
               height={280}
               className="rounded-lg"
             />
+          )}
+
+          {state === 'expired' && (
+            <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-accent-red/20 flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#f85149" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="16" cy="16" r="12" />
+                  <line x1="16" y1="10" x2="16" y2="18" />
+                  <circle cx="16" cy="22" r="1" fill="#f85149" stroke="none" />
+                </svg>
+              </div>
+              <span className="text-accent-red text-sm font-medium">QR code expired</span>
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-accent-purple text-white text-sm rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Refresh QR Code
+              </button>
+            </div>
           )}
 
           {state === 'connected' && (

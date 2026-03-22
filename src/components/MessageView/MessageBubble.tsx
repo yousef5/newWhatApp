@@ -4,6 +4,7 @@ import { formatFullTime, formatFileSize } from '@/lib/utils'
 interface MessageBubbleProps {
   message: Message
   showSender?: boolean
+  onRetry?: (message: Message) => void
 }
 
 function StatusIcon({ status }: { status: Message['status'] }) {
@@ -23,7 +24,7 @@ function StatusIcon({ status }: { status: Message['status'] }) {
   }
 }
 
-export default function MessageBubble({ message, showSender }: MessageBubbleProps) {
+export default function MessageBubble({ message, showSender, onRetry }: MessageBubbleProps) {
   const isOutgoing = message.isFromMe
   const isFailed = message.status === 'failed'
 
@@ -34,7 +35,7 @@ export default function MessageBubble({ message, showSender }: MessageBubbleProp
           isOutgoing
             ? 'bg-bubble-outgoing rounded-xl rounded-tr-sm'
             : 'bg-bubble-incoming border border-border-primary rounded-xl rounded-tl-sm'
-        }`}
+        } ${isFailed ? 'opacity-70' : ''}`}
       >
         {/* Sender name for group chats */}
         {showSender && !isOutgoing && message.senderJid && (
@@ -103,8 +104,16 @@ export default function MessageBubble({ message, showSender }: MessageBubbleProp
           </p>
         )}
 
-        {/* Timestamp + status */}
+        {/* Timestamp + status + retry */}
         <div className="flex items-center justify-end gap-1 mt-0.5">
+          {isFailed && onRetry && (
+            <button
+              onClick={() => onRetry(message)}
+              className="text-[9px] text-accent-red hover:underline cursor-pointer mr-1"
+            >
+              Retry
+            </button>
+          )}
           <span className="text-[9px] text-text-muted">
             {formatFullTime(message.timestamp)}
           </span>

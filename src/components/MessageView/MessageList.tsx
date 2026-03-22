@@ -2,14 +2,16 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useMessagesStore } from '@/stores/messages'
 import { formatDate } from '@/lib/utils'
 import MessageBubble from './MessageBubble'
+import type { Message } from '@shared/types'
 
 interface MessageListProps {
   accountId: string
   chatJid: string
   isGroup: boolean
+  onRetryMessage?: (message: Message) => void
 }
 
-export default function MessageList({ accountId, chatJid, isGroup }: MessageListProps) {
+export default function MessageList({ accountId, chatJid, isGroup, onRetryMessage }: MessageListProps) {
   const messages = useMessagesStore((s) => s.messages)
   const loading = useMessagesStore((s) => s.loading)
   const hasMore = useMessagesStore((s) => s.hasMore)
@@ -127,6 +129,7 @@ export default function MessageList({ accountId, chatJid, isGroup }: MessageList
               key={msg.id}
               message={msg}
               showSender={isGroup}
+              onRetry={onRetryMessage}
             />
           ))}
         </div>

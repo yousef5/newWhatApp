@@ -98,6 +98,29 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
     }
   }, [accountId, chatJid])
 
+  const handleRetryMessage = useCallback(
+    async (message: Message) => {
+      if (!message.content) return
+      // Update status to pending
+      useMessagesStore.getState().updateMessage(message.id, { status: 'pending' })
+      try {
+        const result = await window.api.invoke('message:send', {
+          accountId,
+          jid: chatJid,
+          content: { text: message.content },
+        })
+        useMessagesStore.getState().updateMessage(message.id, {
+          id: result.id,
+          status: 'sent',
+        })
+      } catch (err) {
+        console.error('Retry failed:', err)
+        useMessagesStore.getState().updateMessage(message.id, { status: 'failed' })
+      }
+    },
+    [accountId, chatJid]
+  )
+
   const handleRetry = useCallback(() => {
     window.api.invoke('account:reconnect', { id: accountId }).catch(console.error)
   }, [accountId])
@@ -135,6 +158,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
         accountId={accountId}
         chatJid={chatJid}
         isGroup={chat.isGroup}
+        onRetryMessage={handleRetryMessage}
       />
 
       {/* Input */}
