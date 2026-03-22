@@ -1,12 +1,7 @@
 import { EventEmitter } from 'events'
-import makeWASocket, {
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  WASocket,
-  WAMessage,
-  BaileysEventMap,
-} from '@whiskeysockets/baileys'
+import baileys from '@whiskeysockets/baileys'
+const { makeWASocket, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = baileys
+type WASocket = ReturnType<typeof makeWASocket>
 import { Boom } from '@hapi/boom'
 import { createAuthState, deleteAuthState } from './auth-store'
 import { ChatStore } from '../storage/chats'

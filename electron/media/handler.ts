@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join, extname } from 'path'
-import { downloadMediaMessage } from '@whiskeysockets/baileys'
+import baileys from '@whiskeysockets/baileys'
+const { downloadMediaMessage } = baileys
 import sharp from 'sharp'
 import { getAccountDir } from '../storage/config'
 import type { WAMessage } from '@whiskeysockets/baileys'

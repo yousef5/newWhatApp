@@ -2,8 +2,9 @@ import { safeStorage } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'fs'
 import { join } from 'path'
 import { getAccountDir } from '../storage/config'
-import { initAuthCreds, BufferJSON, proto } from '@whiskeysockets/baileys'
-import type { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '@whiskeysockets/baileys'
+import baileys from '@whiskeysockets/baileys'
+const { initAuthCreds, BufferJSON, proto } = baileys
+type AuthenticationState = baileys.AuthenticationState
 
 function getAuthDir(accountId: string): string {
   return join(getAccountDir(accountId), 'auth')
