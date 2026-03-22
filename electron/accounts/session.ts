@@ -655,8 +655,14 @@ export class BaileysSession extends EventEmitter {
     // For groups, sender is the participant. For DMs, sender is the remote JID.
     // Never store the group JID as the sender.
     const isGroup = chatJid.endsWith('@g.us')
-    // participant can be in key.participant or message's participant field
-    const participant = msg.key.participant || (msg as any).participant || null
+    // participant can be in various places depending on message source
+    const participant = msg.key.participant
+      || (msg as any).participant
+      || (msg as any).verifiedBizName  // business messages
+      || null
+
+    // For group messages without participant, use pushName as sender display name
+    // Store it directly as senderJid since we can't do a contact JOIN without a real JID
     const rawSenderJid = isFromMe ? null : (participant || (isGroup ? null : chatJid))
 
     // Store pushName as contact name for the sender
@@ -668,8 +674,8 @@ export class BaileysSession extends EventEmitter {
       })
     }
 
-    // Always store the raw JID — name is resolved at query time via JOIN
-    const senderJid = rawSenderJid
+    // Store raw JID if available, otherwise use pushName as display name
+    const senderJid = rawSenderJid || (isGroup && !isFromMe && pushName ? pushName : null)
 
     const timestamp = typeof msg.messageTimestamp === 'number'
       ? msg.messageTimestamp

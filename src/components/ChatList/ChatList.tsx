@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useChatsStore } from '@/stores/chats'
 import { useMessagesStore } from '@/stores/messages'
+import { preloadFileUrls } from '@/hooks/useFileUrl'
 import ChatListHeader from './ChatListHeader'
 import ChatListItem from './ChatListItem'
 
@@ -27,6 +28,12 @@ export default function ChatList({ accountId }: ChatListProps) {
       return (b.lastMessageTimestamp ?? 0) - (a.lastMessageTimestamp ?? 0)
     })
   }, [chats, filter, searchQuery])
+
+  // Preload avatar images when chat list changes
+  useEffect(() => {
+    const paths = filteredChats.slice(0, 30).map(c => c.profilePicture).filter(Boolean)
+    if (paths.length > 0) preloadFileUrls(paths)
+  }, [filteredChats])
 
   const handleChatClick = useCallback(
     async (jid: string) => {

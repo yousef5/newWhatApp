@@ -24,14 +24,17 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
   // Cache sender contacts for avatars in groups
   const [senderContacts, setSenderContacts] = useState<Record<string, Contact | null>>({})
 
-  // Load sender contact info for group messages
+  // Load sender contact info for all incoming messages
   useEffect(() => {
-    if (!isGroup) return
     const unknownSenders = new Set<string>()
     for (const msg of messages) {
       if (!msg.isFromMe && msg.senderJid && msg.senderJid.includes('@') && !senderContacts[msg.senderJid]) {
         unknownSenders.add(msg.senderJid)
       }
+    }
+    // For DM chats, also look up the chat JID as the sender
+    if (!isGroup && !senderContacts[chatJid]) {
+      unknownSenders.add(chatJid)
     }
     if (unknownSenders.size === 0) return
 
@@ -46,7 +49,7 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       }
       setSenderContacts(prev => ({ ...prev, ...updates }))
     })
-  }, [accountId, isGroup, messages.length])
+  }, [accountId, isGroup, chatJid, messages.length])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -181,16 +184,24 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
           </div>
 
           {group.messages.map((msg) => {
-            const isIncomingGroup = isGroup && !msg.isFromMe
-            const senderContact = msg.senderJid ? senderContacts[msg.senderJid] : null
+            const isIncoming = !msg.isFromMe
+            // For avatar: use sender's contact, or for DMs use the chat contact
+            const senderJid = msg.senderJid
+            let avatarContact = senderJid && senderJid.includes('@')
+              ? senderContacts[senderJid]
+              : null
+            // For DM chats, use chat JID contact for avatar
+            if (!avatarContact && !isGroup && isIncoming) {
+              avatarContact = senderContacts[chatJid] ?? null
+            }
 
             return (
               <MessageBubble
                 key={msg.id}
                 message={msg}
-                showSender={isIncomingGroup}
-                showAvatar={isIncomingGroup}
-                senderAvatarPath={senderContact?.profilePicturePath}
+                showSender={isIncoming && isGroup}
+                showAvatar={isIncoming}
+                senderAvatarPath={avatarContact?.profilePicturePath}
                 onRetry={onRetryMessage}
               />
             )
