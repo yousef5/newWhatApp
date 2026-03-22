@@ -95,6 +95,8 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
 
         if (olderMessages.length < 50) {
           useMessagesStore.getState().setHasMore(false)
+          // Try fetching from WhatsApp server silently in background
+          ;(window.api as any).invoke('chat:fetchHistory', { accountId, jid: chatJid, count: 50 }).catch(() => {})
         }
       } catch (err) {
         console.error('Failed to load older messages:', err)
@@ -131,7 +133,7 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       )}
       {!hasMore && messages.length > 0 && (
         <div className="text-center py-3">
-          <span className="text-text-muted text-[10px] font-mono uppercase">NO MORE MESSAGES</span>
+          <span className="text-text-muted text-[9px] font-mono">&#x2014;</span>
         </div>
       )}
 
