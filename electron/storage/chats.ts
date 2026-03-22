@@ -12,6 +12,7 @@ export class ChatStore {
     const rows = this.db.prepare(`
       SELECT * FROM chats
       WHERE archived = 0
+        AND jid != 'status@broadcast'
       ORDER BY pinned DESC, last_message_timestamp DESC
     `).all() as any[]
     return rows.map(this.mapRow)
