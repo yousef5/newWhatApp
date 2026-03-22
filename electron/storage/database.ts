@@ -101,6 +101,12 @@ function runMigrations(db: Database.Database): void {
       is_blocked INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS lid_mapping (
+      lid TEXT PRIMARY KEY,
+      phone_jid TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_lid_phone ON lid_mapping(phone_jid);
+
     CREATE TABLE IF NOT EXISTS group_metadata (
       jid TEXT PRIMARY KEY REFERENCES chats(jid) ON DELETE CASCADE,
       subject TEXT,

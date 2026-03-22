@@ -10,9 +10,11 @@ export class MessageStore {
 
   getForChat(chatJid: string, before?: number, limit = 50): Message[] {
     let query = `
-      SELECT m.*, COALESCE(ct.name, ct.saved_name) as sender_name
+      SELECT m.*, COALESCE(ct.name, ct.saved_name, ct2.name, ct2.saved_name) as sender_name
       FROM messages m
       LEFT JOIN contacts ct ON m.sender_jid = ct.jid
+      LEFT JOIN lid_mapping lm ON m.sender_jid = lm.lid
+      LEFT JOIN contacts ct2 ON lm.phone_jid = ct2.jid
       WHERE m.chat_jid = ?`
     const params: any[] = [chatJid]
 

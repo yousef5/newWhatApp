@@ -36,13 +36,13 @@ function formatChatName(chat: Chat): string {
   if (chat.name) return chat.name
   const raw = chat.jid.split('@')[0]
   const suffix = chat.jid.split('@')[1]
-  // Format as phone number
+  // Format as phone number for WhatsApp JIDs
   if (suffix === 's.whatsapp.net' && /^\d+$/.test(raw)) {
     return formatPhoneNumber(raw)
   }
-  // LID JIDs — these are internal IDs, not phone numbers
+  // LID JIDs — internal IDs, not phone numbers. Show as "~XXXX"
   if (suffix === 'lid') {
-    return formatPhoneNumber(raw)
+    return '~' + raw.slice(-6)
   }
   // Group JIDs without name
   if (suffix === 'g.us') {

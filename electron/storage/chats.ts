@@ -4,7 +4,7 @@ import type { Chat } from '@shared/types'
 export class ChatStore {
   constructor(private accountId: string) {}
 
-  private get db() {
+  get db() {
     return getDatabase(this.accountId)
   }
 
@@ -12,11 +12,13 @@ export class ChatStore {
     const rows = this.db.prepare(`
       SELECT
         c.*,
-        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name,
-        ct.profile_picture_path as profile_pic
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name, ct2.name, ct2.saved_name) as resolved_name,
+        COALESCE(ct.profile_picture_path, ct2.profile_picture_path) as profile_pic
       FROM chats c
       LEFT JOIN contacts ct ON c.jid = ct.jid
       LEFT JOIN group_metadata gm ON c.jid = gm.jid
+      LEFT JOIN lid_mapping lm ON c.jid = lm.lid
+      LEFT JOIN contacts ct2 ON lm.phone_jid = ct2.jid
       WHERE c.archived = 0
         AND c.jid != 'status@broadcast'
       ORDER BY c.pinned DESC, c.last_message_timestamp DESC
@@ -28,11 +30,13 @@ export class ChatStore {
     const row = this.db.prepare(`
       SELECT
         c.*,
-        COALESCE(c.name, gm.subject, ct.name, ct.saved_name) as resolved_name,
-        ct.profile_picture_path as profile_pic
+        COALESCE(c.name, gm.subject, ct.name, ct.saved_name, ct2.name, ct2.saved_name) as resolved_name,
+        COALESCE(ct.profile_picture_path, ct2.profile_picture_path) as profile_pic
       FROM chats c
       LEFT JOIN contacts ct ON c.jid = ct.jid
       LEFT JOIN group_metadata gm ON c.jid = gm.jid
+      LEFT JOIN lid_mapping lm ON c.jid = lm.lid
+      LEFT JOIN contacts ct2 ON lm.phone_jid = ct2.jid
       WHERE c.jid = ?
     `).get(jid) as any
     return row ? this.mapRow(row) : null

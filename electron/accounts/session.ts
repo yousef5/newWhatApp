@@ -321,6 +321,26 @@ export class BaileysSession extends EventEmitter {
       }
     } catch (e) { console.error('contacts.update error:', e) } })
 
+    // --- lid-mapping.update (maps LID JIDs to phone JIDs) ---
+    socket.ev.on('lid-mapping.update' as any, (data: any) => { try {
+      if (data?.lid && data?.pn) {
+        const lidJid = data.lid.includes('@') ? data.lid : `${data.lid}@lid`
+        const phoneJid = data.pn.includes('@') ? data.pn : `${data.pn}@s.whatsapp.net`
+        console.log(`[${this.accountId}] LID mapping: ${lidJid} -> ${phoneJid}`)
+
+        // Store the mapping
+        const db = (this.chatStore as any).db
+        db.prepare('INSERT OR REPLACE INTO lid_mapping (lid, phone_jid) VALUES (?, ?)').run(lidJid, phoneJid)
+
+        // Also copy contact name from phone JID to chat name if available
+        const phoneContact = this.contactStore.getContact(phoneJid)
+        if (phoneContact?.name) {
+          this.chatStore.upsert({ jid: lidJid, name: phoneContact.name })
+          this.contactStore.upsertContact({ jid: lidJid, name: phoneContact.name })
+        }
+      }
+    } catch (e) { console.error('lid-mapping.update error:', e) } })
+
     // --- presence.update ---
     socket.ev.on('presence.update', ({ id, presences }) => {
       const jids = Object.keys(presences)
