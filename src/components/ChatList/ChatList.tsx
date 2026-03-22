@@ -85,13 +85,36 @@ export default function ChatList({ accountId }: ChatListProps) {
             />
           ))
         ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
-            <span className="text-text-muted text-xs font-mono uppercase">WAITING FOR CHATS...</span>
-            <span className="text-text-muted text-[10px] font-mono text-center">
-              IF EMPTY AFTER 30S, REMOVE ACCOUNT AND RE-LINK
-            </span>
-          </div>
+          <LoadingChats />
         )}
+      </div>
+    </div>
+  )
+}
+
+function LoadingChats() {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Skeleton chat items */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-3 py-3 border-b border-border-primary animate-pulse">
+          <div className="w-10 h-10 bg-bg-tertiary shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="flex justify-between">
+              <div className="h-3 bg-bg-tertiary" style={{ width: `${60 + Math.random() * 80}px` }} />
+              <div className="h-2 bg-bg-tertiary w-10" />
+            </div>
+            <div className="h-2 bg-bg-tertiary" style={{ width: `${100 + Math.random() * 100}px` }} />
+          </div>
+        </div>
+      ))}
+
+      {/* Loading text */}
+      <div className="flex flex-col items-center justify-center py-6 gap-3">
+        <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent animate-spin" />
+        <span className="text-text-muted text-[10px] font-mono uppercase tracking-wider">
+          SYNCING CHATS...
+        </span>
       </div>
     </div>
   )

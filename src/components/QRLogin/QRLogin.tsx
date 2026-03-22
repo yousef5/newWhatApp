@@ -61,7 +61,8 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
       if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current)
       if (progressTimerRef.current) clearInterval(progressTimerRef.current)
       setState('connected')
-      connectedTimerRef.current = setTimeout(onConnected, 1500)
+      // Wait longer for history sync to complete before closing
+      connectedTimerRef.current = setTimeout(onConnected, 8000)
     }
   })
 
@@ -201,7 +202,11 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
                   </div>
                   <div className="text-center">
                     <p className="text-accent-green text-base font-bold font-mono uppercase">CONNECTED!</p>
-                    <p className="text-text-muted text-xs font-mono mt-1 uppercase">LOADING YOUR CONVERSATIONS...</p>
+                    <div className="mt-3 flex flex-col items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-accent-purple border-t-transparent animate-spin" />
+                      <p className="text-text-muted text-[10px] font-mono uppercase">SYNCING YOUR CHATS AND CONTACTS...</p>
+                      <p className="text-text-muted text-[9px] font-mono">THIS MAY TAKE UP TO 60 SECONDS</p>
+                    </div>
                   </div>
                 </div>
               )}
