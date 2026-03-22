@@ -107,7 +107,7 @@ export default function App() {
           />
         ) : (
           /* Stack of WhatsApp Web webviews — only active one is visible */
-          <div className="flex-1 relative">
+          <div className="flex-1 relative overflow-hidden" style={{ minWidth: 0, minHeight: 0 }}>
             {accounts.map((account) => (
               <WhatsAppView
                 key={account.id}

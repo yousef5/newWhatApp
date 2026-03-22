@@ -30,9 +30,15 @@ export default function WhatsAppView({ accountId, isActive }: WhatsAppViewProps)
       ref={webviewRef}
       src="https://web.whatsapp.com"
       partition={`persist:wa-${accountId}`}
-      className="w-full h-full"
-      style={{ display: isActive ? 'flex' : 'none' }}
-      // @ts-ignore - Electron webview attributes
+      style={{
+        display: isActive ? 'flex' : 'none',
+        width: '100%',
+        height: '100%',
+        position: isActive ? 'relative' : 'absolute',
+        top: 0,
+        left: 0,
+      }}
+      // @ts-ignore
       allowpopups="true"
       useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     />
