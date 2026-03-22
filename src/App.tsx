@@ -1,12 +1,18 @@
 import { useState, useCallback } from 'react'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useAccountsStore } from '@/stores/accounts'
+import { useChatsStore } from '@/stores/chats'
 import AccountSidebar from '@/components/AccountSidebar/AccountSidebar'
 import ConnectionBanner from '@/components/shared/ConnectionBanner'
 import EmptyState from '@/components/shared/EmptyState'
+import ChatList from '@/components/ChatList/ChatList'
+import MessageView from '@/components/MessageView/MessageView'
+import QRLogin from '@/components/QRLogin/QRLogin'
+import Settings from '@/components/Settings/Settings'
 
 export default function App() {
   const { accounts, activeAccountId, switchAccount } = useAccounts()
+  const activeChatJid = useChatsStore((s) => s.activeChatJid)
   const [showQR, setShowQR] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
@@ -26,6 +32,21 @@ export default function App() {
       window.api.invoke('account:reconnect', { id: activeAccountId }).catch(console.error)
     }
   }, [activeAccountId])
+
+  const handleQRConnected = useCallback(() => {
+    setShowQR(false)
+    // Reload accounts to pick up the new one
+    window.api
+      .invoke('account:list', undefined)
+      .then((accountList) => {
+        useAccountsStore.getState().setAccounts(accountList)
+        // Switch to the newest account
+        if (accountList.length > 0) {
+          switchAccount(accountList[accountList.length - 1].id)
+        }
+      })
+      .catch(console.error)
+  }, [switchAccount])
 
   return (
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
@@ -97,47 +118,33 @@ export default function App() {
         ) : (
           /* Main layout: ChatList | MessageView */
           <>
-            {/* Chat list placeholder */}
-            <div className="w-[340px] bg-bg-secondary border-r border-border-primary flex items-center justify-center shrink-0">
-              <span className="text-text-muted text-sm">Chat list here</span>
-            </div>
+            {/* Chat list */}
+            {activeAccountId && <ChatList accountId={activeAccountId} />}
 
-            {/* Message view placeholder */}
-            <div className="flex-1 bg-bg-primary flex items-center justify-center">
-              <span className="text-text-muted text-sm">Messages here</span>
-            </div>
+            {/* Message view or empty state */}
+            {activeAccountId && activeChatJid ? (
+              <MessageView accountId={activeAccountId} chatJid={activeChatJid} />
+            ) : (
+              <EmptyState
+                title="Select a chat"
+                subtitle="Choose a conversation from the list to start messaging"
+              />
+            )}
           </>
         )}
       </div>
 
-      {/* QR overlay placeholder */}
+      {/* QR Login overlay */}
       {showQR && (
-        <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center">
-          <div className="bg-bg-secondary rounded-xl p-8 text-text-primary">
-            <p className="mb-4">QR Scanner will appear here</p>
-            <button
-              onClick={() => setShowQR(false)}
-              className="px-4 py-2 bg-accent-purple rounded-lg text-sm hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <QRLogin
+          onClose={() => setShowQR(false)}
+          onConnected={handleQRConnected}
+        />
       )}
 
-      {/* Settings overlay placeholder */}
+      {/* Settings overlay */}
       {showSettings && (
-        <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center">
-          <div className="bg-bg-secondary rounded-xl p-8 text-text-primary">
-            <p className="mb-4">Settings will appear here</p>
-            <button
-              onClick={() => setShowSettings(false)}
-              className="px-4 py-2 bg-accent-purple rounded-lg text-sm hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <Settings onClose={() => setShowSettings(false)} />
       )}
     </div>
   )
