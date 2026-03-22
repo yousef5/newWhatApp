@@ -88,15 +88,36 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
           limit: 50,
         })
 
-        if (olderMessages.length < 50) {
-          useMessagesStore.getState().setHasMore(false)
-        }
-
         if (olderMessages.length > 0) {
           useMessagesStore.getState().prependMessages(olderMessages)
           requestAnimationFrame(() => {
             if (el) el.scrollTop = el.scrollHeight - prevScrollHeight
           })
+        }
+
+        if (olderMessages.length < 50) {
+          // No more local messages — try fetching from WhatsApp server
+          try {
+            await (window.api as any).invoke('chat:fetchHistory', { accountId, jid: chatJid, count: 50 })
+            // Wait for messages to arrive
+            await new Promise(r => setTimeout(r, 3000))
+            const newMessages = await window.api.invoke('chat:load', {
+              accountId,
+              jid: chatJid,
+              before: oldestMessage.timestamp,
+              limit: 50,
+            })
+            if (newMessages.length > 0) {
+              useMessagesStore.getState().prependMessages(newMessages)
+              requestAnimationFrame(() => {
+                if (el) el.scrollTop = el.scrollHeight - prevScrollHeight
+              })
+            } else {
+              useMessagesStore.getState().setHasMore(false)
+            }
+          } catch {
+            useMessagesStore.getState().setHasMore(false)
+          }
         }
       } catch (err) {
         console.error('Failed to load older messages:', err)

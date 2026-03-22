@@ -34,11 +34,22 @@ export default function ChatList({ accountId }: ChatListProps) {
       useMessagesStore.getState().clear()
 
       try {
-        const messages = await window.api.invoke('chat:load', {
+        let messages = await window.api.invoke('chat:load', {
           accountId,
           jid,
           limit: 200,
         })
+
+        // If no local messages, request from WhatsApp server
+        if (messages.length === 0) {
+          useMessagesStore.getState().setLoading(true)
+          await (window.api as any).invoke('chat:fetchHistory', { accountId, jid, count: 50 })
+          // Wait a bit for messages to arrive via events
+          await new Promise(r => setTimeout(r, 3000))
+          messages = await window.api.invoke('chat:load', { accountId, jid, limit: 200 })
+          useMessagesStore.getState().setLoading(false)
+        }
+
         useMessagesStore.getState().setMessages(messages)
         useMessagesStore.getState().setHasMore(messages.length >= 200)
 
@@ -46,6 +57,7 @@ export default function ChatList({ accountId }: ChatListProps) {
         useChatsStore.getState().updateChat(jid, { unreadCount: 0 })
       } catch (err) {
         console.error('Failed to load chat messages:', err)
+        useMessagesStore.getState().setLoading(false)
       }
     },
     [accountId]

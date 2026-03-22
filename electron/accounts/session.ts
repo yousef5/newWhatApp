@@ -512,6 +512,37 @@ export class BaileysSession extends EventEmitter {
     return this.messageStore.getForChat(jid, before, limit)
   }
 
+  async fetchOlderMessages(jid: string, count = 50): Promise<void> {
+    if (!this.socket) return
+    // Get oldest local message for this chat
+    const localMessages = this.messageStore.getForChat(jid, undefined, 1)
+    if (localMessages.length === 0) {
+      // No local messages — request with a fake old key
+      try {
+        await (this.socket as any).fetchMessageHistory(count, {
+          remoteJid: jid,
+          id: '',
+          fromMe: false,
+        }, 0)
+        console.log(`[${this.accountId}] Requested ${count} messages for ${jid}`)
+      } catch (e) {
+        console.error('fetchMessageHistory failed:', e)
+      }
+    } else {
+      const oldest = localMessages[0]
+      try {
+        await (this.socket as any).fetchMessageHistory(count, {
+          remoteJid: jid,
+          id: oldest.id,
+          fromMe: oldest.isFromMe,
+        }, oldest.timestamp * 1000)
+        console.log(`[${this.accountId}] Requested ${count} older messages for ${jid} before ${oldest.id}`)
+      } catch (e) {
+        console.error('fetchMessageHistory failed:', e)
+      }
+    }
+  }
+
   searchMessages(query: string, jid?: string): SearchResult[] {
     return this.messageStore.search(query, jid)
   }

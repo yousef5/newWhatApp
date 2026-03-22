@@ -153,6 +153,13 @@ export function registerIPCHandlers(): void {
 
   // ── Contact handlers ───────────────────────────────────────────────────────
 
+  // ── Fetch older messages from WhatsApp server ──
+  ipcMain.handle('chat:fetchHistory', async (_event, payload: { accountId: string; jid: string; count?: number }) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    await session.fetchOlderMessages(payload.jid, payload.count ?? 50)
+  })
+
   ipcMain.handle('contact:get', (_event, payload: IPCCommands['contact:get']['payload']) => {
     const session = accountManager.getSession(payload.accountId)
     if (!session) return null
