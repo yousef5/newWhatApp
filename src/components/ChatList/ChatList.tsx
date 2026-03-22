@@ -66,8 +66,11 @@ export default function ChatList({ accountId }: ChatListProps) {
             />
           ))
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <span className="text-text-muted text-xs font-mono uppercase">NO CHATS FOUND</span>
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
+            <span className="text-text-muted text-xs font-mono uppercase">WAITING FOR CHATS...</span>
+            <span className="text-text-muted text-[10px] font-mono text-center">
+              IF EMPTY AFTER 30S, REMOVE ACCOUNT AND RE-LINK
+            </span>
           </div>
         )}
       </div>
