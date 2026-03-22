@@ -420,12 +420,14 @@ export class BaileysSession extends EventEmitter {
         }
       }
 
-      // Upsert all messages
+      // Upsert all messages and download media for recent ones
+      const recentMediaMsgs: any[] = []
+      const oneDayAgo = Math.floor(Date.now() / 1000) - 86400
+
       for (const msg of messages) {
         const parsed = this.parseMessage(msg)
         if (!parsed) continue
 
-        // Ensure chat exists
         this.chatStore.upsert({
           jid: parsed.chatJid,
           isGroup: parsed.chatJid.endsWith('@g.us'),
@@ -434,6 +436,16 @@ export class BaileysSession extends EventEmitter {
         })
 
         this.messageStore.insert(parsed)
+
+        // Queue recent media for download
+        if (parsed.timestamp > oneDayAgo && (parsed.type === 'image' || parsed.type === 'video' || parsed.type === 'audio')) {
+          recentMediaMsgs.push({ msg, id: parsed.id })
+        }
+      }
+
+      // Download recent media in background
+      for (const { msg: rawMsg, id } of recentMediaMsgs.slice(0, 20)) {
+        this.downloadMedia(rawMsg, id).catch(() => {})
       }
 
       // Notify renderer to refresh chat list

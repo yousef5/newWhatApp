@@ -1,5 +1,6 @@
 import type { Chat } from '@shared/types'
-import { formatTime, truncate, getInitials } from '@/lib/utils'
+import { formatTime, truncate } from '@/lib/utils'
+import Avatar from '@/components/shared/Avatar'
 
 interface ChatListItemProps {
   chat: Chat
@@ -7,47 +8,23 @@ interface ChatListItemProps {
   onClick: () => void
 }
 
-const AVATAR_COLORS = [
-  '#a855f7', '#3b82f6', '#22c55e', '#e040fb', '#f59e0b',
-  '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981',
-]
-
-function getAvatarColor(jid: string): string {
-  let hash = 0
-  for (let i = 0; i < jid.length; i++) {
-    hash = jid.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-}
-
 function formatPhoneNumber(digits: string): string {
-  // Try to format as international phone number
+  if (digits.startsWith('20') && digits.length >= 11) {
+    return '+20 ' + digits.slice(2, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8)
+  }
   if (digits.length >= 10 && digits.length <= 15) {
-    // Common formats: +20 xxx xxx xxxx (Egypt), +1 xxx xxx xxxx (US), etc.
-    if (digits.startsWith('20') && digits.length >= 11) {
-      return '+20 ' + digits.slice(2, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8)
-    }
     return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6)
   }
-  return digits
+  return '+' + digits
 }
 
 function formatChatName(chat: Chat): string {
   if (chat.name) return chat.name
   const raw = chat.jid.split('@')[0]
   const suffix = chat.jid.split('@')[1]
-  // Format as phone number for WhatsApp JIDs
-  if (suffix === 's.whatsapp.net' && /^\d+$/.test(raw)) {
-    return formatPhoneNumber(raw)
-  }
-  // LID JIDs — internal IDs, not phone numbers. Show as "~XXXX"
-  if (suffix === 'lid') {
-    return '~' + raw.slice(-6)
-  }
-  // Group JIDs without name
-  if (suffix === 'g.us') {
-    return 'Group'
-  }
+  if (suffix === 's.whatsapp.net' && /^\d+$/.test(raw)) return formatPhoneNumber(raw)
+  if (suffix === 'lid') return '~' + raw.slice(-6)
+  if (suffix === 'g.us') return 'Group'
   return raw
 }
 
@@ -64,34 +41,21 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
           : 'hover:bg-bg-tertiary/50 border-l-4 border-l-transparent'
       }`}
     >
-      {/* Avatar */}
-      {chat.profilePicture ? (
-        <img
-          src={`local-file://${chat.profilePicture}`}
-          alt=""
-          className="w-10 h-10 shrink-0 object-cover border-2 border-border-secondary"
-        />
-      ) : (
-        <div
-          className="w-10 h-10 flex items-center justify-center shrink-0 text-white text-xs font-bold font-mono border-2 border-border-secondary"
-          style={{ backgroundColor: chat.isGroup ? '#3b82f6' : getAvatarColor(chat.jid) }}
-        >
-          {getInitials(displayName)}
-        </div>
-      )}
+      <Avatar
+        filePath={chat.profilePicture}
+        name={displayName}
+        jid={chat.jid}
+        size={40}
+        isGroup={chat.isGroup}
+      />
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <span className={`text-[13px] font-bold truncate font-mono ${hasUnread ? 'text-text-primary' : 'text-text-primary'}`}>
+          <span className="text-[13px] font-bold truncate font-mono text-text-primary">
             {displayName}
           </span>
           {chat.lastMessageTimestamp != null && (
-            <span
-              className={`text-[10px] shrink-0 ml-2 font-mono ${
-                hasUnread ? 'text-accent-purple font-bold' : 'text-text-muted'
-              }`}
-            >
+            <span className={`text-[10px] shrink-0 ml-2 font-mono ${hasUnread ? 'text-accent-purple font-bold' : 'text-text-muted'}`}>
               {formatTime(chat.lastMessageTimestamp)}
             </span>
           )}

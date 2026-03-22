@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useIPCEvent } from '@/hooks/useIPC'
-import { getInitials } from '@/lib/utils'
+import Avatar from '@/components/shared/Avatar'
 import GroupInfo from '@/components/GroupInfo/GroupInfo'
 import type { PresenceData } from '@shared/types'
 
@@ -38,17 +38,7 @@ export default function ChatHeader({ accountId, chatJid, chatName, isGroup, prof
     <>
       <div className="h-14 px-4 flex items-center gap-3 border-b-2 border-border-secondary bg-bg-secondary shrink-0">
         {/* Avatar */}
-        {profilePicture ? (
-          <img src={`local-file://${profilePicture}`} alt="" className="w-9 h-9 shrink-0 object-cover border-2 border-border-secondary" />
-        ) : (
-          <div
-            className={`w-9 h-9 flex items-center justify-center text-white text-xs font-bold shrink-0 font-mono border-2 border-border-secondary ${
-              isGroup ? 'bg-accent-blue' : 'bg-bg-tertiary'
-            }`}
-          >
-            {getInitials(chatName)}
-          </div>
-        )}
+        <Avatar filePath={profilePicture} name={chatName} jid={chatJid} size={36} isGroup={isGroup} />
 
         {/* Name + presence */}
         <div

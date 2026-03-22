@@ -302,6 +302,27 @@ export function registerIPCHandlers(): void {
     updateSettings(payload.settings)
   })
 
+  // ── Read local file as data URL (for images/media)
+  ipcMain.handle('file:readAsDataUrl', async (_event, filePath: string) => {
+    try {
+      const { readFileSync, existsSync } = require('fs')
+      const { extname } = require('path')
+      if (!filePath || !existsSync(filePath)) return null
+      const buffer = readFileSync(filePath)
+      const ext = extname(filePath).toLowerCase()
+      const mimeMap: Record<string, string> = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+        '.mp4': 'video/mp4', '.webm': 'video/webm',
+        '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+      }
+      const mime = mimeMap[ext] || 'application/octet-stream'
+      return `data:${mime};base64,${buffer.toString('base64')}`
+    } catch {
+      return null
+    }
+  })
+
   // ── Refetch avatars ──────────────────────────────────────────────────────
   ipcMain.handle('account:refetchAvatars', async (_event, payload: IPCCommands['account:refetchAvatars']['payload']) => {
     const session = accountManager.getSession(payload.accountId)

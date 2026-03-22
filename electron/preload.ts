@@ -23,6 +23,11 @@ const api = {
     maximize: () => ipcRenderer.invoke('window:maximize'),
     close: () => ipcRenderer.invoke('window:close'),
   },
+
+  // Read a local file as a data URL (for displaying images/media)
+  getFileUrl: (filePath: string): Promise<string | null> => {
+    return ipcRenderer.invoke('file:readAsDataUrl', filePath)
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, protocol, net } from 'electron'
 import { join } from 'path'
 import { pathToFileURL } from 'url'
+import { readFileSync, existsSync } from 'fs'
 import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
 import { accountManager } from './accounts/manager'
@@ -9,7 +10,6 @@ import { closeAllDatabases } from './storage/database'
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
-// Single instance lock
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
@@ -30,36 +30,27 @@ function createWindow(): void {
     minHeight: 600,
     frame: false,
     titleBarStyle: 'hiddenInset',
-    backgroundColor: '#0d1117',
+    backgroundColor: '#000000',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      webSecurity: false, // Allow loading local files in dev mode
     },
   })
 
   setMainWindow(mainWindow)
   registerIPCHandlers()
 
-  mainWindow.on('close', (e) => {
-    // For now just close. Config-based close-to-tray will be added when config storage exists.
-  })
+  mainWindow.on('close', () => {})
+  mainWindow.on('closed', () => { mainWindow = null })
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
-
-  // Load renderer
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
+    mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-  }
-
-  // Open devtools in dev mode
-  if (process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.webContents.openDevTools()
   }
 }
 
@@ -75,21 +66,17 @@ function createTray(): void {
   tray.on('click', () => mainWindow?.show())
 }
 
-// Register custom protocol to serve local files (avatars, media)
+// Register custom protocol for local file access
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'local-file', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true } }
+  { scheme: 'localfile', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true, standard: true, secure: true } }
 ])
 
 app.whenReady().then(() => {
-  // Handle local-file:// protocol — maps to filesystem
-  protocol.handle('local-file', (request) => {
-    // URL is like local-file:///home/joe/path/to/file.jpg
-    // or local-file://home/joe/path/to/file.jpg
-    let filePath = decodeURIComponent(request.url)
-    filePath = filePath.replace(/^local-file:\/\/\/?/, '/')
-    // Ensure absolute path
-    if (!filePath.startsWith('/')) filePath = '/' + filePath
-    console.log('[local-file] Serving:', filePath)
+  // Serve local files via localfile:// protocol
+  protocol.handle('localfile', (request) => {
+    const url = new URL(request.url)
+    // localfile://path/to/file -> /path/to/file
+    const filePath = decodeURIComponent(url.pathname)
     return net.fetch(pathToFileURL(filePath).href)
   })
 
