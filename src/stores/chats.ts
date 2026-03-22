@@ -14,7 +14,7 @@ interface ChatsState {
   setFilter: (filter: ChatFilter) => void
   setSearchQuery: (query: string) => void
   updateChat: (jid: string, update: Partial<Chat>) => void
-  getFilteredChats: () => Chat[]
+  upsertChat: (chat: Chat) => void
 }
 
 export const useChatsStore = create<ChatsState>((set, get) => ({
@@ -38,25 +38,13 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
       ),
     })),
 
-  getFilteredChats: () => {
-    const { chats, filter, searchQuery } = get()
-    let filtered = chats.filter((c) => !c.archived)
-
-    if (filter === 'unread') {
-      filtered = filtered.filter((c) => c.unreadCount > 0)
-    } else if (filter === 'groups') {
-      filtered = filtered.filter((c) => c.isGroup)
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter((c) => c.name.toLowerCase().includes(q))
-    }
-
-    // Sort: pinned first, then by lastMessageTimestamp descending
-    return filtered.sort((a, b) => {
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
-      return (b.lastMessageTimestamp ?? 0) - (a.lastMessageTimestamp ?? 0)
-    })
-  },
+  // Add or update a chat — if it exists update it, otherwise add it
+  upsertChat: (chat) =>
+    set((s) => {
+      const exists = s.chats.find((c) => c.jid === chat.jid)
+      if (exists) {
+        return { chats: s.chats.map((c) => c.jid === chat.jid ? { ...c, ...chat } : c) }
+      }
+      return { chats: [chat, ...s.chats] }
+    }),
 }))

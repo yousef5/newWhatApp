@@ -114,37 +114,34 @@ export function useAccounts() {
     const chatState = useChatsStore.getState()
 
     if (data.accountId === state.activeAccountId) {
-      // Update chat list preview
-      updateChat(data.message.chatJid, {
-        lastMessageTimestamp: data.message.timestamp,
-        lastMessagePreview: data.message.content,
-      })
+      const existingChat = chatState.chats.find(c => c.jid === data.message.chatJid)
+      const isViewingThisChat = chatState.activeChatJid === data.message.chatJid
 
-      // If viewing the chat this message belongs to, add it and mark read
-      if (chatState.activeChatJid === data.message.chatJid) {
-        addMessage(data.message)
-        // Auto-mark read
-        window.api
-          .invoke('chat:markRead', {
-            accountId: data.accountId,
-            jid: data.message.chatJid,
-          })
-          .catch(console.error)
-      } else {
-        // Not viewing this chat — increment unread on the chat
-        updateChat(data.message.chatJid, {
-          unreadCount: (chatState.chats.find((c) => c.jid === data.message.chatJid)?.unreadCount ?? 0) + 1,
+      // Update or add chat in list
+      if (existingChat) {
+        useChatsStore.getState().updateChat(data.message.chatJid, {
+          lastMessageTimestamp: data.message.timestamp,
+          lastMessagePreview: data.message.content || `[${data.message.type}]`,
+          unreadCount: isViewingThisChat ? 0 : existingChat.unreadCount + (data.message.isFromMe ? 0 : 1),
         })
+      } else {
+        // New chat — reload full chat list from backend to get proper name/avatar
+        window.api.invoke('chat:list', { accountId: data.accountId })
+          .then(chats => useChatsStore.getState().setChats(chats))
+          .catch(console.error)
+      }
+
+      // If viewing this chat, add the message
+      if (isViewingThisChat) {
+        addMessage(data.message)
+        window.api.invoke('chat:markRead', { accountId: data.accountId, jid: data.message.chatJid }).catch(console.error)
       }
     }
 
-    // Increment account-level unread for non-self messages if not the active chat
+    // Increment account-level unread
     if (
       !data.message.isFromMe &&
-      !(
-        data.accountId === state.activeAccountId &&
-        chatState.activeChatJid === data.message.chatJid
-      )
+      !(data.accountId === state.activeAccountId && chatState.activeChatJid === data.message.chatJid)
     ) {
       incrementUnread(data.accountId)
     }
@@ -173,10 +170,9 @@ export function useAccounts() {
       const chatState = useChatsStore.getState()
       const existing = chatState.chats.find(c => c.jid === data.jid)
       if (existing) {
-        updateChat(data.jid, data.update)
-      } else {
-        // New chat from history sync — add it to the list
-        setChats([...chatState.chats, data.update as import('@shared/types').Chat])
+        useChatsStore.getState().updateChat(data.jid, data.update)
+      } else if (data.update && (data.update as any).jid) {
+        useChatsStore.getState().upsertChat(data.update as import('@shared/types').Chat)
       }
     }
   })
