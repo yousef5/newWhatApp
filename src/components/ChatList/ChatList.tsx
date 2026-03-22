@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from 'react'
-import { FixedSizeList as List } from 'react-window'
+import { List } from 'react-window'
 import { useChatsStore } from '@/stores/chats'
 import { useMessagesStore } from '@/stores/messages'
 import ChatListHeader from './ChatListHeader'
