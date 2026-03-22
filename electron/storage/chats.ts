@@ -38,13 +38,13 @@ export class ChatStore {
     `).run({
       jid: chat.jid,
       name: chat.name ?? null,
-      isGroup: chat.isGroup != null ? (chat.isGroup ? 1 : 0) : null,
-      unreadCount: chat.unreadCount ?? null,
+      isGroup: chat.isGroup ? 1 : 0,
+      unreadCount: chat.unreadCount ?? 0,
       lastMessageTimestamp: chat.lastMessageTimestamp ?? null,
       lastMessagePreview: chat.lastMessagePreview ?? null,
-      mutedUntil: chat.mutedUntil ?? null,
-      pinned: chat.pinned != null ? (chat.pinned ? 1 : 0) : null,
-      archived: chat.archived != null ? (chat.archived ? 1 : 0) : null,
+      mutedUntil: chat.mutedUntil ?? 0,
+      pinned: chat.pinned ? 1 : 0,
+      archived: chat.archived ? 1 : 0,
     })
   }
 

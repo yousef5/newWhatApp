@@ -31,7 +31,7 @@ export class ContactStore {
       profilePictureUrl: contact.profilePictureUrl ?? null,
       profilePicturePath: contact.profilePicturePath ?? null,
       about: contact.about ?? null,
-      isBlocked: contact.isBlocked != null ? (contact.isBlocked ? 1 : 0) : null,
+      isBlocked: contact.isBlocked ? 1 : 0,
     })
   }
 

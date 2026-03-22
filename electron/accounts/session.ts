@@ -120,7 +120,7 @@ export class BaileysSession extends EventEmitter {
     socket.ev.on('creds.update', saveCreds)
 
     // --- chats.upsert ---
-    socket.ev.on('chats.upsert', (chats) => {
+    socket.ev.on('chats.upsert', (chats) => { try {
       for (const chat of chats) {
         this.chatStore.upsert({
           jid: chat.id,
@@ -142,7 +142,7 @@ export class BaileysSession extends EventEmitter {
           })
         }
       }
-    })
+    } catch (e) { console.error('chats.upsert error:', e) } })
 
     // --- chats.update ---
     socket.ev.on('chats.update', (updates) => {
@@ -172,7 +172,7 @@ export class BaileysSession extends EventEmitter {
     })
 
     // --- messages.upsert ---
-    socket.ev.on('messages.upsert', ({ messages, type }) => {
+    socket.ev.on('messages.upsert', ({ messages, type }) => { try {
       for (const msg of messages) {
         const parsed = this.parseMessage(msg)
         if (!parsed) continue
@@ -210,7 +210,7 @@ export class BaileysSession extends EventEmitter {
           message: parsed,
         })
       }
-    })
+    } catch (e) { console.error('messages.upsert error:', e) } })
 
     // --- messages.update ---
     socket.ev.on('messages.update', (updates) => {
@@ -237,7 +237,7 @@ export class BaileysSession extends EventEmitter {
     })
 
     // --- contacts.upsert ---
-    socket.ev.on('contacts.upsert', (contacts) => {
+    socket.ev.on('contacts.upsert', (contacts) => { try {
       for (const contact of contacts) {
         const mapped: Partial<Contact> & { jid: string } = {
           jid: contact.id,
@@ -251,7 +251,7 @@ export class BaileysSession extends EventEmitter {
           update: mapped,
         })
       }
-    })
+    } catch (e) { console.error('contacts.upsert error:', e) } })
 
     // --- presence.update ---
     socket.ev.on('presence.update', ({ id, presences }) => {
