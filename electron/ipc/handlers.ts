@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, session } from 'electron'
 import {
   loadConfig,
   updateSettings,
@@ -30,11 +30,29 @@ export function registerIPCHandlers(): void {
   // ── Account handlers ───────────────────────────────────────────────────────
 
   ipcMain.handle('account:create', (_event, payload: IPCCommands['account:create']['payload']) => {
-    return createAccount(payload.name)
+    const account = createAccount(payload.name)
+    // Setup permissions for the new account's webview partition
+    const ses = session.fromPartition(`persist:wa-${account.id}`)
+    ses.setPermissionRequestHandler((_wc, permission, callback) => {
+      const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write', 'pointerLock', 'fullscreen']
+      callback(allowed.includes(permission))
+    })
+    ses.setPermissionCheckHandler((_wc, permission) => {
+      const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write', 'pointerLock', 'fullscreen']
+      return allowed.includes(permission)
+    })
+    ses.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
+    return account
   })
 
-  ipcMain.handle('account:remove', (_event, payload: IPCCommands['account:remove']['payload']) => {
+  ipcMain.handle('account:remove', async (_event, payload: IPCCommands['account:remove']['payload']) => {
     removeAccount(payload.id)
+    // Clear the webview session data for removed account
+    try {
+      const ses = session.fromPartition(`persist:wa-${payload.id}`)
+      await ses.clearStorageData()
+      await ses.clearCache()
+    } catch {}
   })
 
   ipcMain.handle('account:rename', (_event, payload: IPCCommands['account:rename']['payload']) => {

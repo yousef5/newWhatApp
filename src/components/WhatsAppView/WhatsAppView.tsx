@@ -70,6 +70,16 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     if (!webview) return
 
     const handleDomReady = () => {
+      // Override Notification.permission to always be 'granted'
+      webview.executeJavaScript(`
+        (function() {
+          if (window.Notification) {
+            Object.defineProperty(Notification, 'permission', { get: () => 'granted' });
+            Notification.requestPermission = () => Promise.resolve('granted');
+          }
+        })()
+      `).catch(() => {})
+
       webview.insertCSS(`
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }

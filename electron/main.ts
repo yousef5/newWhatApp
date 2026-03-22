@@ -1,7 +1,8 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, session } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, session, Notification } from 'electron'
 import { join } from 'path'
 import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
+import { listAccounts } from './storage/config'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -17,6 +18,24 @@ app.on('second-instance', () => {
     mainWindow.focus()
   }
 })
+
+function setupPermissionsForPartition(partitionName: string): void {
+  const ses = session.fromPartition(partitionName)
+
+  // Allow notifications, media, clipboard for WhatsApp Web
+  ses.setPermissionRequestHandler((_webContents, permission, callback) => {
+    const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write', 'pointerLock', 'fullscreen']
+    callback(allowed.includes(permission))
+  })
+
+  ses.setPermissionCheckHandler((_webContents, permission) => {
+    const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write', 'pointerLock', 'fullscreen']
+    return allowed.includes(permission)
+  })
+
+  // Set user agent for WhatsApp Web
+  ses.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -39,15 +58,45 @@ function createWindow(): void {
   setMainWindow(mainWindow)
   registerIPCHandlers()
 
-  // Set a desktop Chrome user-agent for all webview partitions
-  // so WhatsApp Web doesn't reject our requests
-  const defaultUserAgent =
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  // Setup permissions for default session
+  setupPermissionsForPartition('default')
 
-  // Handle permission requests from webviews (notifications, media, etc.)
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write']
-    callback(allowed.includes(permission))
+  // Setup permissions for all existing account partitions
+  const accounts = listAccounts()
+  for (const account of accounts) {
+    setupPermissionsForPartition(`persist:wa-${account.id}`)
+  }
+
+  // Listen for new webview creation to setup permissions
+  mainWindow.webContents.on('did-attach-webview', (_event, webContents) => {
+    // Allow notifications from webviews
+    webContents.on('did-finish-load', () => {
+      // Inject notification override to make notifications work through Electron
+      webContents.executeJavaScript(`
+        (function() {
+          const OriginalNotification = window.Notification;
+
+          // Override Notification to ensure it works in webview
+          if (OriginalNotification) {
+            // Ensure permission is always granted
+            Object.defineProperty(OriginalNotification, 'permission', {
+              get: () => 'granted'
+            });
+
+            // Override requestPermission to always resolve with granted
+            OriginalNotification.requestPermission = () => Promise.resolve('granted');
+          }
+        })()
+      `).catch(() => {})
+    })
+
+    // Handle notification clicks - bring window to front
+    webContents.on('notification-response' as any, () => {
+      if (mainWindow) {
+        mainWindow.show()
+        mainWindow.focus()
+      }
+    })
   })
 
   mainWindow.on('close', () => {})
