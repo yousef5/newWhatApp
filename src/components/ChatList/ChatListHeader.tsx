@@ -41,6 +41,7 @@ export default function ChatListHeader({ accountId }: ChatListHeaderProps) {
       {/* Search input */}
       <input
         type="text"
+        data-search-input
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search or start new chat..."

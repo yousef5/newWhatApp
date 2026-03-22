@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useAccountsStore } from '@/stores/accounts'
 import { useChatsStore } from '@/stores/chats'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import AccountSidebar from '@/components/AccountSidebar/AccountSidebar'
 import ConnectionBanner from '@/components/shared/ConnectionBanner'
 import EmptyState from '@/components/shared/EmptyState'
@@ -13,6 +14,7 @@ import Settings from '@/components/Settings/Settings'
 export default function App() {
   const { accounts, activeAccountId, switchAccount } = useAccounts()
   const activeChatJid = useChatsStore((s) => s.activeChatJid)
+  const setActiveChat = useChatsStore((s) => s.setActiveChat)
   const [showQR, setShowQR] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
@@ -47,6 +49,47 @@ export default function App() {
       })
       .catch(console.error)
   }, [switchAccount])
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNextAccount: useCallback(() => {
+      if (accounts.length === 0) return
+      const currentIdx = accounts.findIndex((a) => a.id === activeAccountId)
+      const nextIdx = (currentIdx + 1) % accounts.length
+      switchAccount(accounts[nextIdx].id)
+    }, [accounts, activeAccountId, switchAccount]),
+
+    onPrevAccount: useCallback(() => {
+      if (accounts.length === 0) return
+      const currentIdx = accounts.findIndex((a) => a.id === activeAccountId)
+      const prevIdx = (currentIdx - 1 + accounts.length) % accounts.length
+      switchAccount(accounts[prevIdx].id)
+    }, [accounts, activeAccountId, switchAccount]),
+
+    onSearch: useCallback(() => {
+      // Focus the search input in the ChatList
+      const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]')
+      if (searchInput) {
+        searchInput.focus()
+      }
+    }, []),
+
+    onEscape: useCallback(() => {
+      if (showSettings) {
+        setShowSettings(false)
+      } else if (showQR) {
+        setShowQR(false)
+      } else if (activeChatJid) {
+        setActiveChat(null)
+      }
+    }, [showSettings, showQR, activeChatJid, setActiveChat]),
+
+    onSwitchAccount: useCallback((index: number) => {
+      if (index < accounts.length) {
+        switchAccount(accounts[index].id)
+      }
+    }, [accounts, switchAccount]),
+  })
 
   return (
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
