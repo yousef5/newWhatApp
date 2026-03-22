@@ -53,6 +53,7 @@ export class BaileysSession extends EventEmitter {
       },
       printQRInTerminal: false,
       generateHighQualityLinkPreview: false,
+      syncFullHistory: true,
     })
 
     this.socket = socket
