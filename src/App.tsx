@@ -12,6 +12,7 @@ export default function App() {
   const setActiveAccount = useAccountsStore((s) => s.setActiveAccount)
 
   const [showSettings, setShowSettings] = useState(false)
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({})
 
   // Load accounts on mount
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function App() {
         }
       })
       .catch(console.error)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleAddAccount = useCallback(async () => {
     try {
@@ -40,15 +41,17 @@ export default function App() {
   }, [accounts.length, setAccounts, setActiveAccount])
 
   const switchAccount = useCallback(
-    (id: string) => {
-      setActiveAccount(id)
-    },
+    (id: string) => setActiveAccount(id),
     [setActiveAccount]
   )
 
+  const handleThumbnail = useCallback((accountId: string, dataUrl: string) => {
+    setThumbnails((prev) => ({ ...prev, [accountId]: dataUrl }))
+  }, [])
+
   return (
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
-      {/* Custom frameless title bar */}
+      {/* Title bar */}
       <div
         className="h-8 bg-bg-sidebar border-b-2 border-border-secondary flex items-center shrink-0 select-none"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
@@ -64,65 +67,56 @@ export default function App() {
             onClick={() => window.api.window.minimize()}
             className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary hover:text-text-primary cursor-pointer border-l-2 border-border-primary"
           >
-            <svg width="12" height="1" viewBox="0 0 12 1" fill="currentColor">
-              <rect width="12" height="1" />
-            </svg>
+            <svg width="12" height="1" viewBox="0 0 12 1" fill="currentColor"><rect width="12" height="1" /></svg>
           </button>
           <button
             onClick={() => window.api.window.maximize()}
             className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary hover:text-text-primary cursor-pointer border-l-2 border-border-primary"
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-              <rect x="0.5" y="0.5" width="9" height="9" />
-            </svg>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1"><rect x="0.5" y="0.5" width="9" height="9" /></svg>
           </button>
           <button
             onClick={() => window.api.window.close()}
             className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-accent-red hover:text-white cursor-pointer border-l-2 border-border-primary"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="1" y1="1" x2="9" y2="9" />
-              <line x1="9" y1="1" x2="1" y2="9" />
+              <line x1="1" y1="1" x2="9" y2="9" /><line x1="9" y1="1" x2="1" y2="9" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Main content area */}
+      {/* Main area */}
       <div className="flex flex-1 min-h-0">
-        {/* Account sidebar */}
         <AccountSidebar
           accounts={accounts}
           activeAccountId={activeAccountId}
+          thumbnails={thumbnails}
           onSwitchAccount={switchAccount}
           onAddAccount={handleAddAccount}
           onOpenSettings={() => setShowSettings(true)}
         />
 
         {accounts.length === 0 ? (
-          /* No accounts: welcome state */
           <EmptyState
             title="WELCOME TO MULTIWHATSAPP"
             subtitle="Click the + button to add your first WhatsApp account"
           />
         ) : (
-          /* Stack of WhatsApp Web webviews — only active one is visible */
           <div className="flex-1 relative overflow-hidden" style={{ minWidth: 0, minHeight: 0 }}>
             {accounts.map((account) => (
               <WhatsAppView
                 key={account.id}
                 accountId={account.id}
                 isActive={account.id === activeAccountId}
+                onThumbnail={handleThumbnail}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Settings overlay */}
-      {showSettings && (
-        <Settings onClose={() => setShowSettings(false)} />
-      )}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
     </div>
   )
 }
