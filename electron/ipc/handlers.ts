@@ -1,5 +1,7 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
 import { accountManager } from '../accounts/manager'
 import { loadConfig, updateSettings } from '../storage/config'
 import type { IPCCommands } from '@shared/types'
@@ -180,6 +182,28 @@ export function registerIPCHandlers(): void {
     }
 
     const sent = await socket.sendMessage(payload.jid, messageContent)
+    return { id: sent?.key?.id ?? '' }
+  })
+
+  ipcMain.handle('media:convertVoice', async (_event, payload: IPCCommands['media:convertVoice']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) throw new Error(`No session for account ${payload.accountId}`)
+    const socket = session.getSocket()
+    if (!socket) throw new Error(`Socket not connected for account ${payload.accountId}`)
+
+    // Save raw audio to a temp file
+    const buffer = Buffer.from(payload.audioBuffer)
+    const tmpPath = join(tmpdir(), `voice-${Date.now()}.webm`)
+    writeFileSync(tmpPath, buffer)
+
+    // TODO: Convert to opus/ogg using ffmpeg for better compatibility
+    // For now, send the raw webm audio as a voice message (ptt = push to talk)
+    const sent = await socket.sendMessage(payload.jid, {
+      audio: readFileSync(tmpPath),
+      mimetype: 'audio/webm; codecs=opus',
+      ptt: true,
+    })
+
     return { id: sent?.key?.id ?? '' }
   })
 

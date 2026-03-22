@@ -65,6 +65,22 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
     [accountId, chatJid, addMessage]
   )
 
+  const handleSendVoice = useCallback(
+    async (blob: Blob) => {
+      try {
+        const arrayBuffer = await blob.arrayBuffer()
+        await window.api.invoke('media:convertVoice', {
+          accountId,
+          jid: chatJid,
+          audioBuffer: arrayBuffer,
+        })
+      } catch (err) {
+        console.error('Failed to send voice note:', err)
+      }
+    },
+    [accountId, chatJid]
+  )
+
   const handleAttach = useCallback(() => {
     // Placeholder - no-op for now
   }, [])
@@ -107,7 +123,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
       />
 
       {/* Input */}
-      <MessageInput onSend={handleSend} onAttach={handleAttach} />
+      <MessageInput onSend={handleSend} onAttach={handleAttach} onSendVoice={handleSendVoice} />
     </div>
   )
 }

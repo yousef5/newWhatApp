@@ -1,12 +1,15 @@
 import { useState, useRef, useCallback, type KeyboardEvent } from 'react'
+import VoiceRecorder from './VoiceRecorder'
 
 interface MessageInputProps {
   onSend: (text: string) => void
   onAttach: () => void
+  onSendVoice?: (blob: Blob) => void
 }
 
-export default function MessageInput({ onSend, onAttach }: MessageInputProps) {
+export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageInputProps) {
   const [text, setText] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSend = useCallback(() => {
@@ -37,7 +40,26 @@ export default function MessageInput({ onSend, onAttach }: MessageInputProps) {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }, [])
 
+  const handleVoiceSend = useCallback(
+    (blob: Blob) => {
+      setIsRecording(false)
+      if (onSendVoice) {
+        onSendVoice(blob)
+      }
+    },
+    [onSendVoice]
+  )
+
+  const handleVoiceCancel = useCallback(() => {
+    setIsRecording(false)
+  }, [])
+
   const hasText = text.trim().length > 0
+
+  // Show VoiceRecorder when recording
+  if (isRecording) {
+    return <VoiceRecorder onSend={handleVoiceSend} onCancel={handleVoiceCancel} />
+  }
 
   return (
     <div className="px-4 py-3 border-t border-border-primary bg-bg-secondary flex items-end gap-2 shrink-0">
@@ -85,7 +107,11 @@ export default function MessageInput({ onSend, onAttach }: MessageInputProps) {
           </svg>
         </button>
       ) : (
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer shrink-0 mb-0.5">
+        <button
+          onMouseDown={() => setIsRecording(true)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer shrink-0 mb-0.5"
+          title="Hold to record voice note"
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 1v8" />
             <path d="M5 5a4 4 0 0 0 8 0" transform="translate(0 4)" />
