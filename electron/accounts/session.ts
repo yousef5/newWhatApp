@@ -66,6 +66,7 @@ export class BaileysSession extends EventEmitter {
       }
 
       if (connection === 'open') {
+        console.log(`[${this.accountId}] Connection OPEN`)
         this.connectionState = 'open'
         this.retryCount = 0
         emitToRenderer('account:connection', {
@@ -126,6 +127,7 @@ export class BaileysSession extends EventEmitter {
 
     // --- chats.upsert ---
     socket.ev.on('chats.upsert', (chats) => { try {
+      console.log(`[${this.accountId}] chats.upsert: ${chats.length} chats`)
       for (const chat of chats) {
         this.chatStore.upsert({
           jid: chat.id,
