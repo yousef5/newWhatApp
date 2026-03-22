@@ -34,7 +34,10 @@ class AccountManager {
 
     const session = new BaileysSession(id)
     this.sessions.set(id, session)
-    await session.connect()
+    // Don't await — let it connect in background so QR events can flow immediately
+    session.connect().catch((err) => {
+      console.error(`Failed to connect account ${id}:`, err)
+    })
 
     return { id }
   }
