@@ -20,22 +20,31 @@ function getAvatarColor(jid: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
+function formatPhoneNumber(digits: string): string {
+  // Try to format as international phone number
+  if (digits.length >= 10 && digits.length <= 15) {
+    // Common formats: +20 xxx xxx xxxx (Egypt), +1 xxx xxx xxxx (US), etc.
+    if (digits.startsWith('20') && digits.length >= 11) {
+      return '+20 ' + digits.slice(2, 5) + ' ' + digits.slice(5, 8) + ' ' + digits.slice(8)
+    }
+    return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6)
+  }
+  return digits
+}
+
 function formatChatName(chat: Chat): string {
   if (chat.name) return chat.name
   const raw = chat.jid.split('@')[0]
   const suffix = chat.jid.split('@')[1]
-  // Format as phone number if it's a whatsapp.net JID with digits
-  if (suffix === 's.whatsapp.net' && /^\d{8,}$/.test(raw)) {
-    return '+' + raw.replace(/(\d{3})(?=\d{4,})/g, '$1 ')
+  // Format as phone number
+  if (suffix === 's.whatsapp.net' && /^\d+$/.test(raw)) {
+    return formatPhoneNumber(raw)
   }
-  // LID JIDs — show as number if all digits, otherwise raw
+  // LID JIDs — these are internal IDs, not phone numbers
   if (suffix === 'lid') {
-    if (/^\d{8,}$/.test(raw)) {
-      return '+' + raw.replace(/(\d{3})(?=\d{4,})/g, '$1 ')
-    }
-    return 'Contact ' + raw.substring(0, 8)
+    return formatPhoneNumber(raw)
   }
-  // Group JIDs
+  // Group JIDs without name
   if (suffix === 'g.us') {
     return 'Group'
   }

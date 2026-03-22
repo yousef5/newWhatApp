@@ -83,7 +83,13 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(() => {
   // Handle local-file:// protocol — maps to filesystem
   protocol.handle('local-file', (request) => {
-    const filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+    // URL is like local-file:///home/joe/path/to/file.jpg
+    // or local-file://home/joe/path/to/file.jpg
+    let filePath = decodeURIComponent(request.url)
+    filePath = filePath.replace(/^local-file:\/\/\/?/, '/')
+    // Ensure absolute path
+    if (!filePath.startsWith('/')) filePath = '/' + filePath
+    console.log('[local-file] Serving:', filePath)
     return net.fetch(pathToFileURL(filePath).href)
   })
 
