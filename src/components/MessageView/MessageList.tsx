@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useMessagesStore } from '@/stores/messages'
+import { useChatsStore } from '@/stores/chats'
 import { formatDate } from '@/lib/utils'
 import MessageBubble from './MessageBubble'
 import type { Message, Contact } from '@shared/types'
@@ -84,7 +85,8 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       const prevScrollHeight = el.scrollHeight
 
       try {
-        const olderMessages = await window.api.invoke('chat:load', {
+        // First try local DB
+        let olderMessages = await window.api.invoke('chat:load', {
           accountId,
           jid: chatJid,
           before: oldestMessage.timestamp,
@@ -98,27 +100,39 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
           })
         }
 
-        if (olderMessages.length < 50) {
-          // No more local messages — try fetching from WhatsApp server
-          try {
-            await (window.api as any).invoke('chat:fetchHistory', { accountId, jid: chatJid, count: 50 })
-            // Wait for messages to arrive
-            await new Promise(r => setTimeout(r, 3000))
-            const newMessages = await window.api.invoke('chat:load', {
+        // If not enough local messages, request from server
+        if (olderMessages.length < 10) {
+          await (window.api as any).invoke('chat:fetchHistory', { accountId, jid: chatJid, count: 50 })
+
+          // Poll for new messages arriving
+          for (let i = 0; i < 5; i++) {
+            await new Promise(r => setTimeout(r, 2000))
+            if (useChatsStore.getState().activeChatJid !== chatJid) break
+
+            const newMsgs = await window.api.invoke('chat:load', {
               accountId,
               jid: chatJid,
               before: oldestMessage.timestamp,
               limit: 50,
             })
-            if (newMessages.length > 0) {
-              useMessagesStore.getState().prependMessages(newMessages)
-              requestAnimationFrame(() => {
-                if (el) el.scrollTop = el.scrollHeight - prevScrollHeight
-              })
-            } else {
-              useMessagesStore.getState().setHasMore(false)
+
+            if (newMsgs.length > olderMessages.length) {
+              // Got new messages — prepend the ones we don't have
+              const existingIds = new Set(useMessagesStore.getState().messages.map(m => m.id))
+              const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
+              if (trulyNew.length > 0) {
+                const newPrevScrollHeight = el.scrollHeight
+                useMessagesStore.getState().prependMessages(trulyNew)
+                requestAnimationFrame(() => {
+                  if (el) el.scrollTop = el.scrollHeight - newPrevScrollHeight
+                })
+              }
+              olderMessages = newMsgs
+              break
             }
-          } catch {
+          }
+
+          if (olderMessages.length === 0) {
             useMessagesStore.getState().setHasMore(false)
           }
         }
