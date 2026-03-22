@@ -10,72 +10,60 @@ interface WhatsAppViewProps {
 export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNameUpdate }: WhatsAppViewProps) {
   const webviewRef = useRef<any>(null)
   const extractIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const avatarFoundRef = useRef(false)
+  const foundRef = useRef(false)
 
   const extractProfileInfo = useCallback(() => {
     const webview = webviewRef.current
-    if (!webview || avatarFoundRef.current) return
+    if (!webview || foundRef.current) return
 
-    // Step 1: Find the profile picture by looking for the user's own avatar
-    // WhatsApp Web has the user avatar as the first clickable image in the left sidebar header
     webview.executeJavaScript(`
       (function() {
         try {
-          // Method 1: Get all images and find the small avatar in the header area
-          const allImgs = Array.from(document.querySelectorAll('img'))
-
-          // The user's profile pic is typically a small image (33-50px) in the top-left header
-          // It's the first img inside a clickable element in the sidebar header
-          let avatarUrl = null
-
-          // Try: header area images that look like profile pics
-          for (const img of allImgs) {
+          // Find all images and look for the user's avatar in the header
+          const imgs = Array.from(document.querySelectorAll('img'))
+          for (const img of imgs) {
             const rect = img.getBoundingClientRect()
-            // Profile avatar is small (30-60px), in the top-left area (y < 80, x < 100)
-            if (rect.width >= 30 && rect.width <= 60 && rect.height >= 30 && rect.height <= 60
-                && rect.top < 80 && rect.left < 400
-                && img.src && !img.src.includes('emoji') && !img.src.startsWith('data:image/gif')) {
-              avatarUrl = img.src
-              break
+            // Avatar is a small circular image in the top-left sidebar area
+            if (rect.width >= 25 && rect.width <= 60
+                && rect.top < 100 && rect.left < 400
+                && img.src
+                && !img.src.includes('emoji')
+                && !img.src.startsWith('data:image/gif')) {
+              return {
+                src: img.src,
+                alt: img.alt || null
+              }
             }
           }
-
-          // If found a blob URL, convert to data URL
-          if (avatarUrl && avatarUrl.startsWith('blob:')) {
-            return fetch(avatarUrl)
-              .then(r => r.blob())
-              .then(blob => new Promise((resolve) => {
-                const reader = new FileReader()
-                reader.onload = () => resolve({ avatar: reader.result })
-                reader.readAsDataURL(blob)
-              }))
-          }
-
-          // If found a regular URL
-          if (avatarUrl && avatarUrl.startsWith('http')) {
-            // Fetch and convert to data URL to avoid CORS issues
-            return fetch(avatarUrl)
-              .then(r => r.blob())
-              .then(blob => new Promise((resolve) => {
-                const reader = new FileReader()
-                reader.onload = () => resolve({ avatar: reader.result })
-                reader.readAsDataURL(blob)
-              }))
-              .catch(() => ({ avatar: null }))
-          }
-
-          return Promise.resolve({ avatar: avatarUrl })
-        } catch(e) {
-          return Promise.resolve({ avatar: null })
-        }
+          return null
+        } catch(e) { return null }
       })()
     `).then((result: any) => {
-      if (result?.avatar && onAvatarUpdate) {
-        avatarFoundRef.current = true
-        onAvatarUpdate(accountId, result.avatar)
+      if (!result?.src) return
+
+      // Update name from alt text
+      if (result.alt && onNameUpdate) {
+        onNameUpdate(accountId, result.alt)
       }
+
+      // Fetch the image and convert to data URL
+      webview.executeJavaScript(`
+        fetch("${result.src}")
+          .then(r => r.blob())
+          .then(blob => new Promise(resolve => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.readAsDataURL(blob)
+          }))
+          .catch(() => null)
+      `).then((dataUrl: string | null) => {
+        if (dataUrl && onAvatarUpdate) {
+          foundRef.current = true
+          onAvatarUpdate(accountId, dataUrl)
+        }
+      }).catch(() => {})
     }).catch(() => {})
-  }, [accountId, onAvatarUpdate])
+  }, [accountId, onAvatarUpdate, onNameUpdate])
 
   useEffect(() => {
     const webview = webviewRef.current
@@ -87,10 +75,8 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; }
       `)
-      // Try extracting at various delays (WhatsApp Web loads progressively)
       setTimeout(extractProfileInfo, 5000)
-      setTimeout(extractProfileInfo, 10000)
-      setTimeout(extractProfileInfo, 15000)
+      setTimeout(extractProfileInfo, 12000)
       setTimeout(extractProfileInfo, 25000)
     }
 
@@ -98,20 +84,20 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     return () => webview.removeEventListener('dom-ready', handleDomReady)
   }, [extractProfileInfo])
 
-  // Reset when account changes
   useEffect(() => {
-    avatarFoundRef.current = false
+    avatarFoundReset()
   }, [accountId])
 
-  // Retry periodically if not found
+  function avatarFoundReset() {
+    foundRef.current = false
+  }
+
   useEffect(() => {
-    if (!avatarFoundRef.current) {
+    if (!foundRef.current) {
       extractIntervalRef.current = setInterval(extractProfileInfo, 30000)
     }
     return () => {
-      if (extractIntervalRef.current) {
-        clearInterval(extractIntervalRef.current)
-      }
+      if (extractIntervalRef.current) clearInterval(extractIntervalRef.current)
     }
   }, [extractProfileInfo])
 
