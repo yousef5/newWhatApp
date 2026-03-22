@@ -159,16 +159,16 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
             <div className="flex-1 h-[2px] bg-border-secondary" />
           </div>
 
-          {group.messages.map((msg, idx) => {
-            const showAv = shouldShowAvatar(msg, idx, group.messages)
+          {group.messages.map((msg) => {
+            const isIncomingGroup = isGroup && !msg.isFromMe
             const senderContact = msg.senderJid ? senderContacts[msg.senderJid] : null
 
             return (
               <MessageBubble
                 key={msg.id}
                 message={msg}
-                showSender={isGroup && showAv}
-                showAvatar={isGroup && showAv}
+                showSender={isIncomingGroup}
+                showAvatar={isIncomingGroup}
                 senderAvatarPath={senderContact?.profilePicturePath}
                 onRetry={onRetryMessage}
               />
