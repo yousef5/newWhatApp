@@ -194,6 +194,20 @@ export class BaileysSession extends EventEmitter {
 
         if (type === 'notify' && !parsed.isFromMe) {
           this.chatStore.incrementUnread(parsed.chatJid)
+
+          // Send OS notification for non-self messages
+          const { Notification } = require('electron')
+          const { loadConfig } = require('../storage/config')
+          const config = loadConfig()
+          if (config.settings.notifications.enabled) {
+            const chatName = this.chatStore.get(parsed.chatJid)?.name || 'Unknown'
+            const notif = new Notification({
+              title: chatName,
+              body: parsed.content || `[${parsed.type}]`,
+              silent: !config.settings.notifications.sound,
+            })
+            notif.show()
+          }
         }
 
         emitToRenderer('message:new', {
