@@ -8,7 +8,7 @@ interface ChatListItemProps {
 }
 
 const AVATAR_COLORS = [
-  '#7c3aed', '#3b82f6', '#00a884', '#e040fb', '#f59e0b',
+  '#a855f7', '#3b82f6', '#22c55e', '#e040fb', '#f59e0b',
   '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981',
 ]
 
@@ -37,10 +37,10 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer text-left ${
+      className={`w-full flex items-center gap-3 px-3 py-2.5 cursor-pointer text-left border-b border-border-primary ${
         isActive
-          ? 'bg-bg-tertiary border-l-[3px] border-accent-purple'
-          : 'hover:bg-bg-tertiary/50 border-l-[3px] border-transparent'
+          ? 'bg-bg-tertiary border-l-4 border-l-accent-purple'
+          : 'hover:bg-bg-tertiary/50 border-l-4 border-l-transparent'
       }`}
     >
       {/* Avatar */}
@@ -48,12 +48,12 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
         <img
           src={`local-file://${chat.profilePicture}`}
           alt=""
-          className="w-10 h-10 rounded-full shrink-0 object-cover"
+          className="w-10 h-10 shrink-0 object-cover border-2 border-border-secondary"
         />
       ) : (
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-semibold"
-          style={{ backgroundColor: chat.isGroup ? '#1f6feb' : getAvatarColor(chat.jid) }}
+          className="w-10 h-10 flex items-center justify-center shrink-0 text-white text-xs font-bold font-mono border-2 border-border-secondary"
+          style={{ backgroundColor: chat.isGroup ? '#3b82f6' : getAvatarColor(chat.jid) }}
         >
           {getInitials(displayName)}
         </div>
@@ -62,13 +62,13 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <span className={`text-[13px] font-semibold truncate ${hasUnread ? 'text-text-primary' : 'text-text-primary'}`}>
+          <span className={`text-[13px] font-bold truncate font-mono ${hasUnread ? 'text-text-primary' : 'text-text-primary'}`}>
             {displayName}
           </span>
           {chat.lastMessageTimestamp != null && (
             <span
-              className={`text-[10px] shrink-0 ml-2 ${
-                hasUnread ? 'text-accent-purple font-semibold' : 'text-text-muted'
+              className={`text-[10px] shrink-0 ml-2 font-mono ${
+                hasUnread ? 'text-accent-purple font-bold' : 'text-text-muted'
               }`}
             >
               {formatTime(chat.lastMessageTimestamp)}
@@ -80,7 +80,7 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
             {chat.lastMessagePreview ? truncate(chat.lastMessagePreview, 35) : '\u00A0'}
           </span>
           {hasUnread && (
-            <span className="min-w-[20px] h-[20px] rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shrink-0 ml-2 px-1">
+            <span className="min-w-[20px] h-[20px] bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shrink-0 ml-2 px-1 font-mono">
               {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
             </span>
           )}

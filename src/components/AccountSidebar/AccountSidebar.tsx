@@ -17,10 +17,10 @@ export default function AccountSidebar({
   onOpenSettings,
 }: AccountSidebarProps) {
   return (
-    <div className="w-[62px] bg-bg-sidebar border-r border-border-primary flex flex-col items-center py-3 shrink-0">
+    <div className="w-[62px] bg-bg-sidebar border-r-2 border-border-secondary flex flex-col items-center py-3 shrink-0">
       {/* App Logo */}
-      <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center mb-4 shrink-0">
-        <span className="text-white font-bold text-base leading-none">W</span>
+      <div className="w-9 h-9 bg-accent-purple flex items-center justify-center mb-4 shrink-0 border-2 border-accent-purple">
+        <span className="text-white font-bold text-base leading-none font-mono">W</span>
       </div>
 
       {/* Account list */}
@@ -40,7 +40,7 @@ export default function AccountSidebar({
         {/* Add account button */}
         <button
           onClick={onAddAccount}
-          className="w-[42px] h-[42px] rounded-xl border-2 border-dashed border-border-secondary text-text-muted flex items-center justify-center hover:border-text-secondary hover:text-text-secondary transition-colors cursor-pointer"
+          className="w-[42px] h-[42px] border-2 border-dashed border-border-secondary text-text-muted flex items-center justify-center hover:border-accent-purple hover:text-accent-purple cursor-pointer"
           title="Add account"
         >
           <svg
@@ -60,7 +60,7 @@ export default function AccountSidebar({
         {/* Settings button */}
         <button
           onClick={onOpenSettings}
-          className="w-[42px] h-[42px] rounded-xl text-text-muted flex items-center justify-center hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer"
+          className="w-[42px] h-[42px] text-text-muted flex items-center justify-center hover:text-text-primary hover:bg-bg-tertiary cursor-pointer border-2 border-transparent hover:border-border-secondary"
           title="Settings"
         >
           <svg

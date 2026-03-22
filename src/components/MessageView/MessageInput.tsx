@@ -62,9 +62,9 @@ export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageI
   }
 
   return (
-    <div className="px-4 py-3 border-t border-border-primary bg-bg-secondary flex items-end gap-2 shrink-0">
+    <div className="px-4 py-3 border-t-2 border-border-secondary bg-bg-secondary flex items-end gap-2 shrink-0">
       {/* Emoji button */}
-      <button className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer shrink-0 mb-0.5">
+      <button className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary cursor-pointer shrink-0 mb-0.5 border border-border-primary">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
           <circle cx="9" cy="9" r="7.5" />
           <path d="M6 10.5s1 1.5 3 1.5 3-1.5 3-1.5" />
@@ -76,7 +76,7 @@ export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageI
       {/* Attach button */}
       <button
         onClick={onAttach}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer shrink-0 mb-0.5"
+        className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary cursor-pointer shrink-0 mb-0.5 border border-border-primary"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15.5 8.5l-6 6a4 4 0 0 1-5.7 0 4 4 0 0 1 0-5.7l6-6a2.7 2.7 0 0 1 3.8 0 2.7 2.7 0 0 1 0 3.8l-6 6a1.3 1.3 0 0 1-1.9 0 1.3 1.3 0 0 1 0-1.9l5.5-5.5" />
@@ -91,8 +91,8 @@ export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageI
         onKeyDown={handleKeyDown}
         onInput={handleInput}
         rows={1}
-        placeholder="Type a message..."
-        className="flex-1 bg-bg-secondary border border-border-primary rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-accent-purple transition-colors scrollbar-thin"
+        placeholder="TYPE A MESSAGE..."
+        className="flex-1 bg-bg-primary border-2 border-border-primary px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-accent-purple scrollbar-thin font-mono"
         style={{ maxHeight: 120 }}
       />
 
@@ -100,7 +100,7 @@ export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageI
       {hasText ? (
         <button
           onClick={handleSend}
-          className="w-8 h-8 rounded-lg bg-accent-purple flex items-center justify-center text-white hover:opacity-90 transition-opacity cursor-pointer shrink-0 mb-0.5"
+          className="w-8 h-8 bg-accent-purple flex items-center justify-center text-white hover:bg-accent-purple/80 cursor-pointer shrink-0 mb-0.5 border-2 border-accent-purple"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M1.5 1.3L14.7 7.5c.4.2.4.8 0 1L1.5 14.7c-.5.2-1-.2-.9-.7L2 9l7.5-1L2 7 .6 2c-.1-.5.4-.9.9-.7z" />
@@ -109,7 +109,7 @@ export default function MessageInput({ onSend, onAttach, onSendVoice }: MessageI
       ) : (
         <button
           onMouseDown={() => setIsRecording(true)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-bg-tertiary transition-colors cursor-pointer shrink-0 mb-0.5"
+          className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary cursor-pointer shrink-0 mb-0.5 border border-border-primary"
           title="Hold to record voice note"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

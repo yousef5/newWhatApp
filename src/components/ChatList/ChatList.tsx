@@ -52,7 +52,7 @@ export default function ChatList({ accountId }: ChatListProps) {
   )
 
   return (
-    <div className="w-[280px] bg-bg-secondary border-r border-border-primary flex flex-col shrink-0">
+    <div className="w-[280px] bg-bg-secondary border-r-2 border-border-secondary flex flex-col shrink-0">
       <ChatListHeader accountId={accountId} />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -67,7 +67,7 @@ export default function ChatList({ accountId }: ChatListProps) {
           ))
         ) : (
           <div className="flex items-center justify-center h-full">
-            <span className="text-text-muted text-xs">No chats found</span>
+            <span className="text-text-muted text-xs font-mono uppercase">NO CHATS FOUND</span>
           </div>
         )}
       </div>

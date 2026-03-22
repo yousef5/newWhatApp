@@ -128,7 +128,7 @@ export default function MessageView({ accountId, chatJid }: MessageViewProps) {
   if (!chat) {
     return (
       <div className="flex-1 flex items-center justify-center bg-bg-primary">
-        <span className="text-text-muted text-sm">Chat not found</span>
+        <span className="text-text-muted text-sm font-mono uppercase">CHAT NOT FOUND</span>
       </div>
     )
   }

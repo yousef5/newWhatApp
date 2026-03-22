@@ -109,7 +109,7 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       {/* Loading indicator for older messages */}
       {loading && (
         <div className="flex justify-center py-3">
-          <div className="w-5 h-5 border-2 border-accent-purple border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-accent-purple border-t-transparent animate-spin" />
         </div>
       )}
 
@@ -117,10 +117,12 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       {groupedMessages.map((group) => (
         <div key={group.date}>
           {/* Date divider */}
-          <div className="flex justify-center py-3">
-            <span className="text-[11px] text-text-secondary bg-bg-tertiary/80 px-4 py-1 rounded-md shadow-sm">
+          <div className="flex items-center py-3 px-4">
+            <div className="flex-1 h-[2px] bg-border-secondary" />
+            <span className="text-[10px] text-text-secondary font-mono font-bold uppercase tracking-widest px-4">
               {group.date}
             </span>
+            <div className="flex-1 h-[2px] bg-border-secondary" />
           </div>
 
           {/* Messages */}
@@ -138,7 +140,7 @@ export default function MessageList({ accountId, chatJid, isGroup, onRetryMessag
       {/* Empty state */}
       {messages.length === 0 && !loading && (
         <div className="flex items-center justify-center h-full">
-          <span className="text-text-muted text-sm">No messages yet</span>
+          <span className="text-text-muted text-sm font-mono uppercase">NO MESSAGES YET</span>
         </div>
       )}
 

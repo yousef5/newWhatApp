@@ -38,25 +38,25 @@ export default function ChatListHeader({ accountId }: ChatListHeaderProps) {
 
   const connectionText =
     account?.connectionState === 'open'
-      ? 'Connected'
+      ? 'CONNECTED'
       : account?.connectionState === 'connecting'
-        ? 'Connecting...'
-        : 'Disconnected'
+        ? 'CONNECTING...'
+        : 'DISCONNECTED'
 
   return (
-    <div className="px-3 pt-3 pb-2 space-y-2 shrink-0">
+    <div className="px-3 pt-3 pb-2 space-y-2 shrink-0 border-b-2 border-border-primary">
       {/* Account name + connection status + refresh */}
       <div className="flex items-center gap-2">
-        <span className="text-[14px] font-bold text-text-primary truncate">
-          {account?.name ?? 'Account'}
+        <span className="text-[14px] font-bold text-text-primary truncate uppercase font-mono tracking-wide">
+          {account?.name ?? 'ACCOUNT'}
         </span>
-        <span className={`text-[10px] ${connectionColor}`}>{connectionText}</span>
+        <span className={`text-[10px] font-mono font-bold ${connectionColor}`}>{connectionText}</span>
         <div className="flex-1" />
         <button
           onClick={handleRefreshAvatars}
           disabled={refreshing}
           title="Refresh avatars"
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors cursor-pointer disabled:opacity-50"
+          className="w-7 h-7 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary cursor-pointer disabled:opacity-50 border border-border-primary"
         >
           <svg
             width="14"
@@ -81,23 +81,23 @@ export default function ChatListHeader({ accountId }: ChatListHeaderProps) {
         data-search-input
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search or start new chat..."
-        className="w-full px-3 py-1.5 text-xs bg-bg-secondary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple transition-colors"
+        placeholder="SEARCH..."
+        className="w-full px-3 py-1.5 text-xs bg-bg-primary border-2 border-border-primary text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple font-mono uppercase"
       />
 
       {/* Filter pills */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-0">
         {FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1 text-[10px] rounded-full capitalize transition-colors cursor-pointer ${
+            className={`flex-1 px-3 py-1.5 text-[10px] uppercase font-bold font-mono tracking-wider cursor-pointer border-2 ${
               filter === f
-                ? 'bg-accent-purple text-white'
-                : 'bg-bg-secondary text-text-secondary hover:text-text-primary'
+                ? 'bg-accent-purple text-white border-accent-purple'
+                : 'bg-bg-primary text-text-secondary border-border-primary hover:text-text-primary hover:border-border-secondary'
             }`}
           >
-            {f === 'all' ? 'All' : f === 'unread' ? 'Unread' : 'Groups'}
+            {f === 'all' ? 'ALL' : f === 'unread' ? 'UNREAD' : 'GROUPS'}
           </button>
         ))}
       </div>

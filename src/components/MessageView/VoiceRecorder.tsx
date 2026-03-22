@@ -117,18 +117,18 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
   }
 
   return (
-    <div className="px-4 py-3 border-t border-border-primary bg-bg-secondary flex items-center gap-3 shrink-0">
+    <div className="px-4 py-3 border-t-2 border-accent-red bg-bg-secondary flex items-center gap-3 shrink-0">
       {/* Recording indicator */}
       <div className="flex items-center gap-2 flex-1">
-        <div className="w-3 h-3 rounded-full bg-accent-red animate-pulse" />
-        <span className="text-[12px] text-accent-red font-medium">Recording...</span>
-        <span className="text-[12px] text-text-muted font-mono">{formatDuration(duration)}</span>
+        <div className="w-3 h-3 bg-accent-red animate-pulse" />
+        <span className="text-[12px] text-accent-red font-bold font-mono uppercase">RECORDING...</span>
+        <span className="text-[12px] text-text-muted font-mono font-bold">{formatDuration(duration)}</span>
       </div>
 
       {/* Cancel button */}
       <button
         onClick={() => stopRecording(false)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-accent-red hover:bg-bg-tertiary transition-colors cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-accent-red hover:bg-bg-tertiary cursor-pointer border border-border-primary"
         title="Cancel"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -140,7 +140,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
       {/* Send button */}
       <button
         onClick={() => stopRecording(true)}
-        className="w-8 h-8 rounded-lg bg-accent-purple flex items-center justify-center text-white hover:opacity-90 transition-opacity cursor-pointer"
+        className="w-8 h-8 bg-accent-purple flex items-center justify-center text-white hover:bg-accent-purple/80 cursor-pointer border-2 border-accent-purple"
         title="Send voice note"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

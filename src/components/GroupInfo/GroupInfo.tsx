@@ -101,33 +101,33 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative w-80 h-full bg-bg-secondary border-l border-border-primary overflow-y-auto scrollbar-thin">
+      <div className="relative w-80 h-full bg-bg-secondary border-l-2 border-accent-purple overflow-y-auto scrollbar-thin">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-bg-secondary border-b border-border-primary px-4 py-3 flex items-center gap-3">
+        <div className="sticky top-0 z-10 bg-bg-secondary border-b-2 border-border-secondary px-4 py-3 flex items-center gap-3">
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-tertiary cursor-pointer border border-border-primary"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="1" y1="1" x2="13" y2="13" />
               <line x1="13" y1="1" x2="1" y2="13" />
             </svg>
           </button>
-          <h2 className="text-sm font-semibold text-text-primary">Group Info</h2>
+          <h2 className="text-sm font-bold text-text-primary uppercase font-mono tracking-wide">GROUP INFO</h2>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent animate-spin" />
           </div>
         ) : groupInfo ? (
           <div className="p-4 space-y-4">
             {/* Group avatar + subject */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-16 h-16 rounded-full bg-accent-blue flex items-center justify-center text-white text-xl font-bold">
+              <div className="w-16 h-16 bg-accent-blue flex items-center justify-center text-white text-xl font-bold font-mono border-2 border-border-secondary">
                 {getInitials(groupInfo.subject || 'Group')}
               </div>
 
@@ -136,27 +136,27 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
                   <input
                     value={subjectDraft}
                     onChange={(e) => setSubjectDraft(e.target.value)}
-                    className="flex-1 bg-bg-primary border border-border-primary rounded px-2 py-1 text-sm text-text-primary focus:outline-none focus:border-accent-purple"
+                    className="flex-1 bg-bg-primary border-2 border-border-primary px-2 py-1 text-sm text-text-primary focus:outline-none focus:border-accent-purple font-mono"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdateSubject()}
                   />
                   <button
                     onClick={handleUpdateSubject}
-                    className="text-xs text-accent-green hover:underline cursor-pointer"
+                    className="text-xs text-accent-green hover:underline cursor-pointer font-mono font-bold uppercase"
                   >
-                    Save
+                    SAVE
                   </button>
                   <button
                     onClick={() => setEditingSubject(false)}
-                    className="text-xs text-text-muted hover:underline cursor-pointer"
+                    className="text-xs text-text-muted hover:underline cursor-pointer font-mono uppercase"
                   >
-                    Cancel
+                    CANCEL
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-text-primary">
-                    {groupInfo.subject || 'Unnamed Group'}
+                  <h3 className="text-base font-bold text-text-primary uppercase font-mono">
+                    {groupInfo.subject || 'UNNAMED GROUP'}
                   </h3>
                   {isAdmin && (
                     <button
@@ -175,24 +175,24 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
                 </div>
               )}
 
-              <span className="text-xs text-text-muted">
-                {groupInfo.participantCount} participants
+              <span className="text-xs text-text-muted font-mono uppercase">
+                {groupInfo.participantCount} PARTICIPANTS
               </span>
             </div>
 
             {/* Description */}
-            <div className="space-y-1">
+            <div className="space-y-1 border-2 border-border-primary p-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-text-muted font-medium">Description</span>
+                <span className="text-xs text-text-muted font-bold font-mono uppercase">DESCRIPTION</span>
                 {isAdmin && !editingDesc && (
                   <button
                     onClick={() => {
                       setDescDraft(groupInfo.description || '')
                       setEditingDesc(true)
                     }}
-                    className="text-xs text-accent-purple hover:underline cursor-pointer"
+                    className="text-xs text-accent-purple hover:underline cursor-pointer font-mono font-bold uppercase"
                   >
-                    Edit
+                    EDIT
                   </button>
                 )}
               </div>
@@ -201,27 +201,27 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
                   <textarea
                     value={descDraft}
                     onChange={(e) => setDescDraft(e.target.value)}
-                    className="w-full bg-bg-primary border border-border-primary rounded px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent-purple resize-none"
+                    className="w-full bg-bg-primary border-2 border-border-primary px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent-purple resize-none font-mono"
                     rows={3}
                     autoFocus
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={handleUpdateDescription}
-                      className="text-xs text-accent-green hover:underline cursor-pointer"
+                      className="text-xs text-accent-green hover:underline cursor-pointer font-mono font-bold uppercase"
                     >
-                      Save
+                      SAVE
                     </button>
                     <button
                       onClick={() => setEditingDesc(false)}
-                      className="text-xs text-text-muted hover:underline cursor-pointer"
+                      className="text-xs text-text-muted hover:underline cursor-pointer font-mono uppercase"
                     >
-                      Cancel
+                      CANCEL
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-text-secondary">
+                <p className="text-xs text-text-secondary font-mono">
                   {groupInfo.description || 'No description'}
                 </p>
               )}
@@ -229,10 +229,10 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
 
             {/* Participants */}
             <div className="space-y-2">
-              <span className="text-xs text-text-muted font-medium">
-                Participants ({groupInfo.participants.length})
+              <span className="text-xs text-text-muted font-bold font-mono uppercase">
+                PARTICIPANTS ({groupInfo.participants.length})
               </span>
-              <div className="space-y-1">
+              <div className="space-y-1 border-2 border-border-primary">
                 {groupInfo.participants.map((participant) => (
                   <ParticipantRow
                     key={participant.jid}
@@ -248,7 +248,7 @@ export default function GroupInfo({ accountId, chatJid, onClose }: GroupInfoProp
           </div>
         ) : (
           <div className="flex items-center justify-center py-12">
-            <span className="text-sm text-text-muted">Failed to load group info</span>
+            <span className="text-sm text-text-muted font-mono uppercase">FAILED TO LOAD GROUP INFO</span>
           </div>
         )}
       </div>
@@ -274,20 +274,20 @@ function ParticipantRow({
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-bg-tertiary group"
+      className="flex items-center gap-2 px-2 py-1.5 hover:bg-bg-tertiary group border-b border-border-primary last:border-b-0"
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
-      <div className="w-7 h-7 rounded-full bg-bg-tertiary flex items-center justify-center text-text-muted text-[10px] font-semibold shrink-0">
+      <div className="w-7 h-7 bg-bg-tertiary flex items-center justify-center text-text-muted text-[10px] font-bold shrink-0 font-mono border border-border-secondary">
         {phoneNumber.slice(-2)}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="text-xs text-text-primary truncate">{phoneNumber}</span>
+          <span className="text-xs text-text-primary truncate font-mono">{phoneNumber}</span>
           {participant.admin && (
-            <span className="text-[9px] px-1 py-0.5 rounded bg-accent-purple/20 text-accent-purple font-medium shrink-0">
-              Admin
+            <span className="text-[9px] px-1 py-0.5 bg-accent-purple text-white font-bold shrink-0 font-mono uppercase">
+              ADMIN
             </span>
           )}
         </div>
@@ -299,26 +299,26 @@ function ParticipantRow({
           {participant.admin ? (
             <button
               onClick={onDemote}
-              className="text-[9px] px-1.5 py-0.5 rounded bg-bg-primary text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+              className="text-[9px] px-1.5 py-0.5 bg-bg-primary text-text-muted hover:text-text-secondary cursor-pointer border border-border-primary font-mono uppercase"
               title="Demote from admin"
             >
-              Demote
+              DEMOTE
             </button>
           ) : (
             <button
               onClick={onPromote}
-              className="text-[9px] px-1.5 py-0.5 rounded bg-bg-primary text-text-muted hover:text-accent-purple transition-colors cursor-pointer"
+              className="text-[9px] px-1.5 py-0.5 bg-bg-primary text-text-muted hover:text-accent-purple cursor-pointer border border-border-primary font-mono uppercase"
               title="Make admin"
             >
-              Promote
+              PROMOTE
             </button>
           )}
           <button
             onClick={onRemove}
-            className="text-[9px] px-1.5 py-0.5 rounded bg-bg-primary text-text-muted hover:text-accent-red transition-colors cursor-pointer"
+            className="text-[9px] px-1.5 py-0.5 bg-bg-primary text-text-muted hover:text-accent-red cursor-pointer border border-border-primary font-mono uppercase"
             title="Remove from group"
           >
-            Remove
+            REMOVE
           </button>
         </div>
       )}

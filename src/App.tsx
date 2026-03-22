@@ -95,11 +95,11 @@ export default function App() {
     <div className="flex flex-col h-screen w-screen bg-bg-primary overflow-hidden">
       {/* Custom frameless title bar */}
       <div
-        className="h-8 bg-bg-sidebar border-b border-border-primary flex items-center shrink-0 select-none"
+        className="h-8 bg-bg-sidebar border-b-2 border-border-secondary flex items-center shrink-0 select-none"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
-        <div className="flex-1 px-4 text-xs text-text-muted font-medium">
-          MultiWhatsApp
+        <div className="flex-1 px-4 text-xs text-text-primary font-bold font-mono uppercase tracking-widest">
+          MULTIWHATSAPP
         </div>
         <div
           className="flex items-center h-full"
@@ -107,7 +107,7 @@ export default function App() {
         >
           <button
             onClick={() => window.api.window.minimize()}
-            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary transition-colors cursor-pointer"
+            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary hover:text-text-primary cursor-pointer border-l-2 border-border-primary"
           >
             <svg width="12" height="1" viewBox="0 0 12 1" fill="currentColor">
               <rect width="12" height="1" />
@@ -115,7 +115,7 @@ export default function App() {
           </button>
           <button
             onClick={() => window.api.window.maximize()}
-            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary transition-colors cursor-pointer"
+            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-bg-tertiary hover:text-text-primary cursor-pointer border-l-2 border-border-primary"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
               <rect x="0.5" y="0.5" width="9" height="9" />
@@ -123,7 +123,7 @@ export default function App() {
           </button>
           <button
             onClick={() => window.api.window.close()}
-            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-accent-red hover:text-white transition-colors cursor-pointer"
+            className="w-12 h-full flex items-center justify-center text-text-muted hover:bg-accent-red hover:text-white cursor-pointer border-l-2 border-border-primary"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <line x1="1" y1="1" x2="9" y2="9" />
@@ -155,7 +155,7 @@ export default function App() {
         {accounts.length === 0 ? (
           /* No accounts: welcome state */
           <EmptyState
-            title="Welcome to MultiWhatsApp"
+            title="WELCOME TO MULTIWHATSAPP"
             subtitle="Click the + button to add your first WhatsApp account"
           />
         ) : (
@@ -169,7 +169,7 @@ export default function App() {
               <MessageView accountId={activeAccountId} chatJid={activeChatJid} />
             ) : (
               <EmptyState
-                title="Select a chat"
+                title="SELECT A CHAT"
                 subtitle="Choose a conversation from the list to start messaging"
               />
             )}
