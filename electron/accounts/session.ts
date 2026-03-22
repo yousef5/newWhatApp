@@ -560,16 +560,28 @@ export class BaileysSession extends EventEmitter {
 
     const chatJid = msg.key.remoteJid
     const isFromMe = !!msg.key.fromMe
-    const senderJid = isFromMe ? null : (msg.key.participant ?? chatJid)
+    // For groups, sender is the participant. For DMs, sender is the remote JID.
+    // Never store the group JID as the sender.
+    const isGroup = chatJid.endsWith('@g.us')
+    const rawSenderJid = isFromMe ? null : (msg.key.participant || (isGroup ? null : chatJid))
 
-    // Store pushName as contact if we don't have a name for this sender yet
-    if (senderJid && (msg as any).pushName) {
-      const existing = this.contactStore.getContact(senderJid)
-      if (!existing || !existing.name) {
-        this.contactStore.upsertContact({
-          jid: senderJid,
-          name: (msg as any).pushName,
-        })
+    // Store pushName as contact name for the sender
+    const pushName = (msg as any).pushName as string | undefined
+    if (rawSenderJid && pushName) {
+      this.contactStore.upsertContact({
+        jid: rawSenderJid,
+        name: pushName,
+      })
+    }
+
+    // Resolve display name: contact name > pushName > raw JID
+    let senderJid = rawSenderJid
+    if (rawSenderJid) {
+      const contact = this.contactStore.getContact(rawSenderJid)
+      if (contact?.name) {
+        senderJid = contact.name
+      } else if (pushName) {
+        senderJid = pushName
       }
     }
     const timestamp = typeof msg.messageTimestamp === 'number'

@@ -57,12 +57,25 @@ export function useAccounts() {
   // IPC event: connection state change
   useIPCEvent('account:connection', (data) => {
     updateConnectionState(data.accountId, data.state)
-    // If connection just opened for active account, reload chats
+    // If connection just opened for active account, reload chats after sync delay
     if (data.state === 'open' && data.accountId === useAccountsStore.getState().activeAccountId) {
+      // Load immediately (may be empty)
       window.api
         .invoke('chat:list', { accountId: data.accountId })
         .then(setChats)
         .catch(console.error)
+
+      // Reload after delays to catch history sync data
+      setTimeout(() => {
+        if (useAccountsStore.getState().activeAccountId === data.accountId) {
+          window.api.invoke('chat:list', { accountId: data.accountId }).then(setChats).catch(console.error)
+        }
+      }, 3000)
+      setTimeout(() => {
+        if (useAccountsStore.getState().activeAccountId === data.accountId) {
+          window.api.invoke('chat:list', { accountId: data.accountId }).then(setChats).catch(console.error)
+        }
+      }, 8000)
     }
   })
 
