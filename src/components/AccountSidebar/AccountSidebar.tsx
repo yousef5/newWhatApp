@@ -23,27 +23,34 @@ export default function AccountSidebar({
     <div className="w-[62px] bg-bg-sidebar border-r-2 border-border-secondary flex flex-col items-center py-3 shrink-0">
       {/* App Logo */}
       <div className="w-10 h-10 mb-4 shrink-0">
-        <svg viewBox="0 0 512 512" fill="none" className="w-full h-full">
-          <path d="M256 16L460 144v224L256 496 52 368V144L256 16z" fill="#0a0a0a" stroke="#a855f7" strokeWidth="12"/>
-          <g transform="translate(120, 150)">
-            <path d="M0 24C0 10.7 10.7 0 24 0h88c13.3 0 24 10.7 24 24v56c0 13.3-10.7 24-24 24H40l-24 24V104H24C10.7 104 0 93.3 0 80V24z" fill="#a855f7"/>
-            <rect x="28" y="44" width="8" height="28" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="44" y="34" width="8" height="38" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="60" y="24" width="8" height="48" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="76" y="14" width="8" height="58" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="92" y="24" width="8" height="48" rx="2" fill="#fff" opacity="0.9"/>
-          </g>
-          <g transform="translate(220, 210)">
-            <path d="M136 24C136 10.7 125.3 0 112 0H24C10.7 0 0 10.7 0 24v56c0 13.3 10.7 24 24 24h72l24 24V104h-8c13.3 0 24-10.7 24-24V24z" fill="#3b82f6"/>
-            <rect x="28" y="44" width="8" height="28" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="44" y="34" width="8" height="38" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="60" y="24" width="8" height="48" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="76" y="34" width="8" height="38" rx="2" fill="#fff" opacity="0.9"/>
-            <rect x="92" y="44" width="8" height="28" rx="2" fill="#fff" opacity="0.9"/>
-          </g>
-          <g transform="translate(196, 340)">
-            <path d="M60 0C40 0 24 16 24 36S40 72 60 72c12 0 22-6 30-16 8 10 18 16 30 16 20 0 36-16 36-36S140 0 120 0c-12 0-22 6-30 16C82 6 72 0 60 0z" fill="none" stroke="#22c55e" strokeWidth="6" strokeLinecap="round"/>
-          </g>
+        <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#c084fc"/>
+              <stop offset="100%" stopColor="#7c3aed"/>
+            </linearGradient>
+            <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#60a5fa"/>
+              <stop offset="100%" stopColor="#2563eb"/>
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="#050505" stroke="#7c3aed" strokeWidth="2" opacity="0.8"/>
+          {/* Phone outline */}
+          <rect x="22" y="14" width="42" height="56" rx="8" fill="#111" stroke="#7c3aed" strokeWidth="1.5"/>
+          {/* Screen */}
+          <rect x="26" y="20" width="34" height="40" rx="2" fill="#0a0a0a"/>
+          {/* Chat bubbles on screen */}
+          <rect x="29" y="24" width="18" height="6" rx="3" fill="url(#lg1)" opacity="0.9"/>
+          <rect x="35" y="33" width="22" height="6" rx="3" fill="url(#lg2)" opacity="0.9"/>
+          <rect x="29" y="42" width="14" height="6" rx="3" fill="url(#lg1)" opacity="0.9"/>
+          <rect x="38" y="51" width="19" height="6" rx="3" fill="url(#lg2)" opacity="0.9"/>
+          {/* Account dots */}
+          <circle cx="74" cy="28" r="8" fill="#7c3aed" stroke="#050505" strokeWidth="2"/>
+          <circle cx="78" cy="48" r="8" fill="#3b82f6" stroke="#050505" strokeWidth="2"/>
+          <circle cx="72" cy="66" r="8" fill="#22c55e" stroke="#050505" strokeWidth="2"/>
+          <text x="74" y="32" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">1</text>
+          <text x="78" y="52" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">2</text>
+          <text x="72" y="70" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">3</text>
         </svg>
       </div>
 

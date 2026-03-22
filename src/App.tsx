@@ -111,16 +111,18 @@ export default function App() {
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div className="flex-1 px-3 flex items-center gap-2">
-          <svg viewBox="0 0 512 512" fill="none" className="w-5 h-5 shrink-0">
-            <path d="M256 16L460 144v224L256 496 52 368V144L256 16z" fill="#0a0a0a" stroke="#a855f7" strokeWidth="16"/>
-            <g transform="translate(120, 150)">
-              <path d="M0 24C0 10.7 10.7 0 24 0h88c13.3 0 24 10.7 24 24v56c0 13.3-10.7 24-24 24H40l-24 24V104H24C10.7 104 0 93.3 0 80V24z" fill="#a855f7"/>
-            </g>
-            <g transform="translate(220, 210)">
-              <path d="M136 24C136 10.7 125.3 0 112 0H24C10.7 0 0 10.7 0 24v56c0 13.3 10.7 24 24 24h72l24 24V104h-8c13.3 0 24-10.7 24-24V24z" fill="#3b82f6"/>
-            </g>
+          <svg viewBox="0 0 100 100" fill="none" className="w-5 h-5 shrink-0">
+            <circle cx="50" cy="50" r="48" fill="#050505" stroke="#7c3aed" strokeWidth="3"/>
+            <rect x="22" y="14" width="42" height="56" rx="8" fill="#111" stroke="#7c3aed" strokeWidth="2"/>
+            <rect x="26" y="20" width="34" height="40" rx="2" fill="#0a0a0a"/>
+            <rect x="29" y="26" width="18" height="6" rx="3" fill="#a855f7"/>
+            <rect x="35" y="37" width="22" height="6" rx="3" fill="#3b82f6"/>
+            <rect x="29" y="48" width="14" height="6" rx="3" fill="#a855f7"/>
+            <circle cx="76" cy="30" r="7" fill="#7c3aed" stroke="#050505" strokeWidth="2"/>
+            <circle cx="78" cy="50" r="7" fill="#3b82f6" stroke="#050505" strokeWidth="2"/>
+            <circle cx="74" cy="68" r="7" fill="#22c55e" stroke="#050505" strokeWidth="2"/>
           </svg>
-          <span className="text-xs text-text-primary font-bold font-mono uppercase tracking-widest">MULTIWHATSAPP</span>
+          <span className="text-xs text-text-primary font-bold font-mono uppercase tracking-widest">MULTI WA</span>
         </div>
         <div
           className="flex items-center h-full"
