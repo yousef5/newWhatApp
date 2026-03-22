@@ -29,7 +29,7 @@ export default function QRLogin({ onClose, onConnected }: QRLoginProps) {
     QRCode.toDataURL(data.qr, {
       width: 256,
       margin: 0,
-      color: { dark: '#ffffff', light: '#00000000' },
+      color: { dark: '#000000', light: '#ffffff' },
       errorCorrectionLevel: 'M',
     })
       .then((url) => {
