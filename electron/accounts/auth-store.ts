@@ -18,21 +18,44 @@ function ensureAuthDir(accountId: string): string {
   return dir
 }
 
+function canEncrypt(): boolean {
+  try {
+    return safeStorage.isEncryptionAvailable()
+  } catch {
+    return false
+  }
+}
+
 function readData(filePath: string): any | null {
   if (!existsSync(filePath)) return null
   try {
-    const encrypted = readFileSync(filePath)
-    const decrypted = safeStorage.decryptString(encrypted)
-    return JSON.parse(decrypted, BufferJSON.reviver)
+    if (canEncrypt()) {
+      const encrypted = readFileSync(filePath)
+      const decrypted = safeStorage.decryptString(encrypted)
+      return JSON.parse(decrypted, BufferJSON.reviver)
+    } else {
+      const raw = readFileSync(filePath, 'utf-8')
+      return JSON.parse(raw, BufferJSON.reviver)
+    }
   } catch {
-    return null
+    // If decryption fails, try reading as plain text (migration case)
+    try {
+      const raw = readFileSync(filePath, 'utf-8')
+      return JSON.parse(raw, BufferJSON.reviver)
+    } catch {
+      return null
+    }
   }
 }
 
 function writeData(filePath: string, data: any): void {
   const serialized = JSON.stringify(data, BufferJSON.replacer)
-  const encrypted = safeStorage.encryptString(serialized)
-  writeFileSync(filePath, encrypted)
+  if (canEncrypt()) {
+    const encrypted = safeStorage.encryptString(serialized)
+    writeFileSync(filePath, encrypted)
+  } else {
+    writeFileSync(filePath, serialized, 'utf-8')
+  }
 }
 
 export async function createAuthState(accountId: string): Promise<{
@@ -42,7 +65,7 @@ export async function createAuthState(accountId: string): Promise<{
   const authDir = ensureAuthDir(accountId)
   const credsPath = join(authDir, 'creds.json')
 
-  let creds: AuthenticationCreds
+  let creds: any
   const savedCreds = readData(credsPath)
   if (savedCreds) {
     creds = savedCreds
@@ -51,8 +74,8 @@ export async function createAuthState(accountId: string): Promise<{
   }
 
   const keys = {
-    get: <T extends keyof SignalDataTypeMap>(type: T, ids: string[]): { [id: string]: SignalDataTypeMap[T] } => {
-      const result: { [id: string]: SignalDataTypeMap[T] } = {}
+    get: (type: string, ids: string[]): { [id: string]: any } => {
+      const result: { [id: string]: any } = {}
       for (const id of ids) {
         const filePath = join(authDir, `${type}-${id}.json`)
         let value = readData(filePath)
@@ -74,7 +97,6 @@ export async function createAuthState(accountId: string): Promise<{
           if (value) {
             writeData(filePath, value)
           } else {
-            // null value means delete
             if (existsSync(filePath)) {
               rmSync(filePath)
             }
