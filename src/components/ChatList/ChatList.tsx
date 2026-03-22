@@ -1,5 +1,4 @@
-import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
-import { List } from 'react-window'
+import { useCallback, useMemo } from 'react'
 import { useChatsStore } from '@/stores/chats'
 import { useMessagesStore } from '@/stores/messages'
 import ChatListHeader from './ChatListHeader'
@@ -52,78 +51,26 @@ export default function ChatList({ accountId }: ChatListProps) {
     [accountId]
   )
 
-  const Row = useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const chat = filteredChats[index]
-      if (!chat) return null
-      return (
-        <ChatListItem
-          chat={chat}
-          isActive={chat.jid === activeChatJid}
-          onClick={() => handleChatClick(chat.jid)}
-          style={style}
-        />
-      )
-    },
-    [filteredChats, activeChatJid, handleChatClick]
-  )
-
   return (
     <div className="w-[280px] bg-bg-secondary border-r border-border-primary flex flex-col shrink-0">
       <ChatListHeader accountId={accountId} />
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {filteredChats.length > 0 ? (
-          <AutoSizedList
-            itemCount={filteredChats.length}
-            itemSize={64}
-            Row={Row}
-          />
+          filteredChats.map((chat) => (
+            <ChatListItem
+              key={chat.jid}
+              chat={chat}
+              isActive={chat.jid === activeChatJid}
+              onClick={() => handleChatClick(chat.jid)}
+            />
+          ))
         ) : (
           <div className="flex items-center justify-center h-full">
             <span className="text-text-muted text-xs">No chats found</span>
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-function AutoSizedList({
-  itemCount,
-  itemSize,
-  Row,
-}: {
-  itemCount: number
-  itemSize: number
-  Row: React.ComponentType<{ index: number; style: React.CSSProperties }>
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState(400)
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    setHeight(el.clientHeight)
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setHeight(entry.contentRect.height)
-      }
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <div ref={containerRef} style={{ height: '100%' }}>
-      <List
-        height={height}
-        itemCount={itemCount}
-        itemSize={itemSize}
-        width="100%"
-      >
-        {Row}
-      </List>
     </div>
   )
 }

@@ -5,16 +5,14 @@ interface ChatListItemProps {
   chat: Chat
   isActive: boolean
   onClick: () => void
-  style?: React.CSSProperties
 }
 
-export default function ChatListItem({ chat, isActive, onClick, style }: ChatListItemProps) {
+export default function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
   const hasUnread = chat.unreadCount > 0
 
   return (
     <button
       onClick={onClick}
-      style={style}
       className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer text-left ${
         isActive
           ? 'bg-bg-secondary border-l-[3px] border-accent-purple'
