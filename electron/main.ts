@@ -1,11 +1,7 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, protocol, net } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, session } from 'electron'
 import { join } from 'path'
-import { pathToFileURL } from 'url'
-import { readFileSync, existsSync } from 'fs'
 import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
-import { accountManager } from './accounts/manager'
-import { closeAllDatabases } from './storage/database'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -36,12 +32,23 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      webSecurity: false, // Allow loading local files in dev mode
+      webviewTag: true,
     },
   })
 
   setMainWindow(mainWindow)
   registerIPCHandlers()
+
+  // Set a desktop Chrome user-agent for all webview partitions
+  // so WhatsApp Web doesn't reject our requests
+  const defaultUserAgent =
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+  // Handle permission requests from webviews (notifications, media, etc.)
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    const allowed = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write']
+    callback(allowed.includes(permission))
+  })
 
   mainWindow.on('close', () => {})
   mainWindow.on('closed', () => { mainWindow = null })
@@ -66,28 +73,9 @@ function createTray(): void {
   tray.on('click', () => mainWindow?.show())
 }
 
-// Register custom protocol for local file access
-protocol.registerSchemesAsPrivileged([
-  { scheme: 'localfile', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true, standard: true, secure: true } }
-])
-
 app.whenReady().then(() => {
-  // Serve local files via localfile:// protocol
-  protocol.handle('localfile', (request) => {
-    const url = new URL(request.url)
-    // localfile://path/to/file -> /path/to/file
-    const filePath = decodeURIComponent(url.pathname)
-    return net.fetch(pathToFileURL(filePath).href)
-  })
-
   createWindow()
   createTray()
-  accountManager.connectAll()
-})
-
-app.on('before-quit', async () => {
-  await accountManager.disconnectAll()
-  closeAllDatabases()
 })
 
 app.on('window-all-closed', () => {

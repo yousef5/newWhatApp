@@ -38,15 +38,6 @@ export default function Settings({ onClose }: SettingsProps) {
     [settings]
   )
 
-  const updateNotification = useCallback(
-    (update: Partial<AppSettings['notifications']>) => {
-      if (!settings) return
-      const notifications = { ...settings.notifications, ...update }
-      updateSetting({ notifications })
-    },
-    [settings, updateSetting]
-  )
-
   const handleRename = useCallback(
     (id: string) => {
       const name = accountNames[id]?.trim()
@@ -64,9 +55,8 @@ export default function Settings({ onClose }: SettingsProps) {
       if (!confirmed) return
 
       window.api
-        .invoke('account:remove', { id, deleteData: true })
+        .invoke('account:remove', { id })
         .then(() => {
-          // Refresh accounts
           return window.api.invoke('account:list', undefined)
         })
         .then((accountList) => {
@@ -105,20 +95,6 @@ export default function Settings({ onClose }: SettingsProps) {
 
         <h2 className="text-xl font-bold text-text-primary mb-6 uppercase font-mono tracking-widest">SETTINGS</h2>
 
-        {/* Notifications */}
-        <Section title="NOTIFICATIONS">
-          <ToggleRow
-            label="ENABLE NOTIFICATIONS"
-            checked={settings.notifications.enabled}
-            onChange={(v) => updateNotification({ enabled: v })}
-          />
-          <ToggleRow
-            label="NOTIFICATION SOUND"
-            checked={settings.notifications.sound}
-            onChange={(v) => updateNotification({ sound: v })}
-          />
-        </Section>
-
         {/* Behavior */}
         <Section title="BEHAVIOR">
           <ToggleRow
@@ -126,20 +102,6 @@ export default function Settings({ onClose }: SettingsProps) {
             checked={settings.closeToTray}
             onChange={(v) => updateSetting({ closeToTray: v })}
           />
-          <div className="flex items-center justify-between py-2 border-b border-border-primary">
-            <span className="text-[12px] text-text-primary font-mono uppercase">IDLE TIMEOUT (MIN)</span>
-            <input
-              type="number"
-              min={5}
-              max={120}
-              value={settings.idleTimeoutMinutes}
-              onChange={(e) => {
-                const val = Math.min(120, Math.max(5, parseInt(e.target.value) || 5))
-                updateSetting({ idleTimeoutMinutes: val })
-              }}
-              className="w-20 px-2 py-1 text-xs text-text-primary bg-bg-primary border-2 border-border-primary focus:outline-none focus:border-accent-purple text-center font-mono"
-            />
-          </div>
         </Section>
 
         {/* Account Management */}
@@ -177,19 +139,12 @@ export default function Settings({ onClose }: SettingsProps) {
           )}
         </Section>
 
-        {/* Storage */}
-        <Section title="STORAGE">
-          <p className="text-xs text-text-muted py-2 font-mono uppercase">
-            MEDIA CACHE MANAGEMENT COMING SOON
-          </p>
-        </Section>
-
         {/* About */}
         <Section title="ABOUT">
-          <p className="text-xs text-text-primary py-1 font-mono font-bold">MULTIWHATSAPP V1.0.0</p>
+          <p className="text-xs text-text-primary py-1 font-mono font-bold">MULTIWHATSAPP V2.0.0</p>
           <p className="text-[10px] text-text-muted leading-relaxed font-mono">
-            THIS APPLICATION IS AN UNOFFICIAL CLIENT. USING UNOFFICIAL WHATSAPP CLIENTS MAY RESULT
-            IN YOUR ACCOUNT BEING TEMPORARILY OR PERMANENTLY BANNED BY WHATSAPP. USE AT YOUR OWN RISK.
+            MULTI-ACCOUNT WHATSAPP DESKTOP CLIENT USING EMBEDDED WHATSAPP WEB.
+            EACH ACCOUNT RUNS IN ITS OWN ISOLATED SESSION.
           </p>
         </Section>
       </div>

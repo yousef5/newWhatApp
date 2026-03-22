@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { IPCChannel, IPCCommands, IPCEventChannel, IPCEvents } from '@shared/types'
+import type { IPCChannel, IPCCommands } from '@shared/types'
 
 const api = {
   invoke: <C extends IPCChannel>(
@@ -9,24 +9,10 @@ const api = {
     return ipcRenderer.invoke(channel, payload)
   },
 
-  on: <C extends IPCEventChannel>(
-    channel: C,
-    callback: (data: IPCEvents[C]) => void
-  ): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: IPCEvents[C]) => callback(data)
-    ipcRenderer.on(channel, handler)
-    return () => ipcRenderer.removeListener(channel, handler)
-  },
-
   window: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     maximize: () => ipcRenderer.invoke('window:maximize'),
     close: () => ipcRenderer.invoke('window:close'),
-  },
-
-  // Read a local file as a data URL (for displaying images/media)
-  getFileUrl: (filePath: string): Promise<string | null> => {
-    return ipcRenderer.invoke('file:readAsDataUrl', filePath)
   },
 }
 

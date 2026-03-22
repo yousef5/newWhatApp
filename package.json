@@ -1,7 +1,7 @@
 {
   "name": "newwhatapp",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "Multi-account WhatsApp desktop client using embedded WhatsApp Web",
   "main": "./out/main/index.js",
   "directories": {
     "doc": "docs"
@@ -9,9 +9,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "postinstall": "npx @electron/rebuild -o better-sqlite3",
-    "rebuild": "npx @electron/rebuild -o better-sqlite3"
+    "preview": "electron-vite preview"
   },
   "repository": {
     "type": "git",
@@ -26,42 +24,24 @@
   },
   "homepage": "https://github.com/yousef5/newWhatApp#readme",
   "dependencies": {
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
-    "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^7.0.0-rc.9",
-    "better-sqlite3": "^12.8.0",
     "electron": "^41.0.3",
     "electron-vite": "^5.0.0",
-    "emoji-mart": "^5.6.0",
-    "ffmpeg-static": "^5.3.0",
-    "fluent-ffmpeg": "^2.1.3",
-    "qrcode": "^1.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-window": "^2.2.7",
-    "sharp": "^0.34.5",
     "uuid": "^13.0.0",
     "vite": "6",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/fluent-ffmpeg": "^2.1.28",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/react-window": "^2.0.0",
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "4",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
-  },
-  "trustedDependencies": [
-    "@whiskeysockets/baileys",
-    "protobufjs"
-  ]
+  }
 }

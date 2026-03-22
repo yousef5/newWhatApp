@@ -1,8 +1,8 @@
-import type { AccountWithState } from '@shared/types'
+import type { Account } from '@shared/types'
 import AccountAvatar from './AccountAvatar'
 
 interface AccountSidebarProps {
-  accounts: AccountWithState[]
+  accounts: Account[]
   activeAccountId: string | null
   onSwitchAccount: (id: string) => void
   onAddAccount: () => void

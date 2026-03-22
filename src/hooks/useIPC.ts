@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react'
-import type { IPCChannel, IPCCommands, IPCEventChannel, IPCEvents } from '@shared/types'
+import { useCallback } from 'react'
+import type { IPCChannel, IPCCommands } from '@shared/types'
 
 /**
  * Returns a typed invoke function that wraps window.api.invoke.
@@ -14,24 +14,4 @@ export function useIPCInvoke() {
     },
     []
   )
-}
-
-/**
- * Subscribes to an IPC event channel. Cleans up on unmount.
- * Uses a ref for stable handler reference so the subscription
- * doesn't churn when the handler closure changes.
- */
-export function useIPCEvent<C extends IPCEventChannel>(
-  channel: C,
-  handler: (data: IPCEvents[C]) => void
-): void {
-  const handlerRef = useRef(handler)
-  handlerRef.current = handler
-
-  useEffect(() => {
-    const unsubscribe = window.api.on(channel, (data) => {
-      handlerRef.current(data)
-    })
-    return unsubscribe
-  }, [channel])
 }
