@@ -125,6 +125,27 @@ export class BaileysSession extends EventEmitter {
     // --- creds.update ---
     socket.ev.on('creds.update', saveCreds)
 
+    // --- chats.set (Baileys v6 uses this on reconnect) ---
+    socket.ev.on('chats.set' as any, (data: any) => { try {
+      const chatArray = data?.chats ?? data
+      if (Array.isArray(chatArray)) {
+        console.log(`[${this.accountId}] chats.set: ${chatArray.length} chats`)
+        for (const chat of chatArray) {
+          this.chatStore.upsert({
+            jid: chat.id,
+            name: chat.name ?? undefined,
+            isGroup: chat.id?.endsWith('@g.us') ?? false,
+            unreadCount: chat.unreadCount ?? 0,
+            lastMessageTimestamp: typeof chat.conversationTimestamp === 'number'
+              ? chat.conversationTimestamp
+              : typeof chat.conversationTimestamp === 'object' && chat.conversationTimestamp
+                ? Number(chat.conversationTimestamp.low || chat.conversationTimestamp)
+                : undefined,
+          })
+        }
+      }
+    } catch (e) { console.error('chats.set error:', e) } })
+
     // --- chats.upsert ---
     socket.ev.on('chats.upsert', (chats) => { try {
       console.log(`[${this.accountId}] chats.upsert: ${chats.length} chats`)
