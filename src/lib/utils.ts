@@ -67,7 +67,8 @@ export function truncate(str: string, len: number): string {
 /**
  * Get initials from a name. "Ahmed Hassan" → "AH", max 2 chars.
  */
-export function getInitials(name: string): string {
+export function getInitials(name: string | null | undefined): string {
+  if (!name) return '?'
   const parts = name.trim().split(/\s+/)
   if (parts.length === 0 || parts[0] === '') return '?'
   if (parts.length === 1) {
