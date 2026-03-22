@@ -46,7 +46,7 @@ export default function ChatListItem({ chat, isActive, onClick }: ChatListItemPr
       {/* Avatar */}
       {chat.profilePicture ? (
         <img
-          src={`file://${chat.profilePicture}`}
+          src={`local-file://${chat.profilePicture}`}
           alt=""
           className="w-10 h-10 rounded-full shrink-0 object-cover"
         />

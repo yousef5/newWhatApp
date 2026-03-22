@@ -87,7 +87,7 @@ export default function MessageBubble({ message, showSender, onRetry }: MessageB
         {message.type === 'image' && (
           <div className="mb-1.5 rounded-lg overflow-hidden">
             {(message.thumbnailPath || message.mediaPath) ? (
-              <img src={`file://${message.thumbnailPath || message.mediaPath}`} alt="" className="max-w-full rounded-lg max-h-64 object-cover" />
+              <img src={`local-file://${message.thumbnailPath || message.mediaPath}`} alt="" className="max-w-full rounded-lg max-h-64 object-cover" />
             ) : (
               <div className="w-48 h-32 bg-black/20 rounded-lg flex items-center justify-center text-text-muted text-xs">
                 Loading image...

@@ -1,5 +1,6 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, protocol, net } from 'electron'
 import { join } from 'path'
+import { pathToFileURL } from 'url'
 import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
 import { accountManager } from './accounts/manager'
@@ -55,6 +56,11 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // Open devtools in dev mode
+  if (process.env.ELECTRON_RENDERER_URL) {
+    mainWindow.webContents.openDevTools()
+  }
 }
 
 function createTray(): void {
@@ -69,7 +75,18 @@ function createTray(): void {
   tray.on('click', () => mainWindow?.show())
 }
 
+// Register custom protocol to serve local files (avatars, media)
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'local-file', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true } }
+])
+
 app.whenReady().then(() => {
+  // Handle local-file:// protocol — maps to filesystem
+  protocol.handle('local-file', (request) => {
+    const filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+    return net.fetch(pathToFileURL(filePath).href)
+  })
+
   createWindow()
   createTray()
   accountManager.connectAll()

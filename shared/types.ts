@@ -188,6 +188,7 @@ export type IPCCommands = {
   'group:updateDescription': { payload: { accountId: string; jid: string; description: string }; response: void }
   'config:get': { payload: void; response: AppConfig }
   'config:update': { payload: { settings: Partial<AppSettings> }; response: void }
+  'account:refetchAvatars': { payload: { accountId: string }; response: void }
 }
 
 // Main → Renderer (events via send)

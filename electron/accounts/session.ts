@@ -464,7 +464,7 @@ export class BaileysSession extends EventEmitter {
 
   // --- Message parser ---
 
-  private async fetchProfilePictures(): Promise<void> {
+  async fetchProfilePictures(force = false): Promise<void> {
     if (!this.socket) return
     const chats = this.chatStore.getAll()
     const { existsSync, mkdirSync, writeFileSync } = await import('fs')
@@ -477,8 +477,10 @@ export class BaileysSession extends EventEmitter {
     // Fetch in batches with delay to avoid rate limiting
     for (const chat of chats.slice(0, 100)) {
       try {
-        const existing = this.contactStore.getContact(chat.jid)
-        if (existing?.profilePicturePath) continue // already have it
+        if (!force) {
+          const existing = this.contactStore.getContact(chat.jid)
+          if (existing?.profilePicturePath) continue
+        }
 
         const url = await this.socket!.profilePictureUrl(chat.jid, 'image').catch(() => null)
         if (!url) continue

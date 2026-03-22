@@ -39,7 +39,7 @@ export default function ChatHeader({ accountId, chatJid, chatName, isGroup, prof
       <div className="h-14 px-4 flex items-center gap-3 border-b border-border-primary bg-bg-secondary shrink-0">
         {/* Avatar */}
         {profilePicture ? (
-          <img src={`file://${profilePicture}`} alt="" className="w-9 h-9 rounded-full shrink-0 object-cover" />
+          <img src={`local-file://${profilePicture}`} alt="" className="w-9 h-9 rounded-full shrink-0 object-cover" />
         ) : (
           <div
             className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0 ${

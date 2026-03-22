@@ -301,4 +301,12 @@ export function registerIPCHandlers(): void {
   ipcMain.handle('config:update', (_event, payload: IPCCommands['config:update']['payload']) => {
     updateSettings(payload.settings)
   })
+
+  // ── Refetch avatars ──────────────────────────────────────────────────────
+  ipcMain.handle('account:refetchAvatars', async (_event, payload: IPCCommands['account:refetchAvatars']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (session) {
+      await (session as any).fetchProfilePictures(true)
+    }
+  })
 }
