@@ -146,6 +146,54 @@ export function registerIPCHandlers(): void {
     return session.getGroupInfo(payload.jid)
   })
 
+  ipcMain.handle('group:addParticipant', async (_event, payload: IPCCommands['group:addParticipant']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupParticipantsUpdate(payload.jid, [payload.participantJid], 'add')
+  })
+
+  ipcMain.handle('group:removeParticipant', async (_event, payload: IPCCommands['group:removeParticipant']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupParticipantsUpdate(payload.jid, [payload.participantJid], 'remove')
+  })
+
+  ipcMain.handle('group:promoteAdmin', async (_event, payload: IPCCommands['group:promoteAdmin']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupParticipantsUpdate(payload.jid, [payload.participantJid], 'promote')
+  })
+
+  ipcMain.handle('group:demoteAdmin', async (_event, payload: IPCCommands['group:demoteAdmin']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupParticipantsUpdate(payload.jid, [payload.participantJid], 'demote')
+  })
+
+  ipcMain.handle('group:updateSubject', async (_event, payload: IPCCommands['group:updateSubject']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupUpdateSubject(payload.jid, payload.subject)
+  })
+
+  ipcMain.handle('group:updateDescription', async (_event, payload: IPCCommands['group:updateDescription']['payload']) => {
+    const session = accountManager.getSession(payload.accountId)
+    if (!session) return
+    const socket = session.getSocket()
+    if (!socket) return
+    await socket.groupUpdateDescription(payload.jid, payload.description)
+  })
+
   // ── Media handlers ─────────────────────────────────────────────────────────
 
   ipcMain.handle('media:download', (_event, payload: IPCCommands['media:download']['payload']) => {
