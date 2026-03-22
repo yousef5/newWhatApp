@@ -2,6 +2,8 @@ import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
 import { join } from 'path'
 import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
+import { accountManager } from './accounts/manager'
+import { closeAllDatabases } from './storage/database'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -70,6 +72,12 @@ function createTray(): void {
 app.whenReady().then(() => {
   createWindow()
   createTray()
+  accountManager.connectAll()
+})
+
+app.on('before-quit', async () => {
+  await accountManager.disconnectAll()
+  closeAllDatabases()
 })
 
 app.on('window-all-closed', () => {
