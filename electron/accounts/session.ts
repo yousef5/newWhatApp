@@ -251,12 +251,31 @@ export class BaileysSession extends EventEmitter {
     // --- contacts.upsert ---
     socket.ev.on('contacts.upsert', (contacts) => { try {
       for (const contact of contacts) {
+        const name = contact.name ?? contact.notify ?? null
         const mapped: Partial<Contact> & { jid: string } = {
           jid: contact.id,
-          name: contact.name ?? contact.notify ?? null,
+          name,
           savedName: contact.name ?? null,
         }
         this.contactStore.upsertContact(mapped)
+
+        // Also update chat name directly so it shows even for @lid JIDs
+        if (name) {
+          const existingChat = this.chatStore.get(contact.id)
+          if (existingChat && !existingChat.name) {
+            this.chatStore.upsert({ jid: contact.id, name })
+          }
+          // Also try to match by LID if contact has a lid field
+          if ((contact as any).lid) {
+            const lidJid = (contact as any).lid
+            this.contactStore.upsertContact({ jid: lidJid, name })
+            const lidChat = this.chatStore.get(lidJid)
+            if (lidChat && !lidChat.name) {
+              this.chatStore.upsert({ jid: lidJid, name })
+            }
+          }
+        }
+
         emitToRenderer('contact:update', {
           accountId: this.accountId,
           jid: contact.id,
@@ -264,6 +283,19 @@ export class BaileysSession extends EventEmitter {
         })
       }
     } catch (e) { console.error('contacts.upsert error:', e) } })
+
+    // --- contacts.update (LID mappings and name changes) ---
+    socket.ev.on('contacts.update', (updates) => { try {
+      for (const update of updates) {
+        if (!update.id) continue
+        const name = (update as any).name ?? (update as any).notify ?? null
+        if (name) {
+          this.contactStore.upsertContact({ jid: update.id, name })
+          // Update chat name too
+          this.chatStore.upsert({ jid: update.id, name })
+        }
+      }
+    } catch (e) { console.error('contacts.update error:', e) } })
 
     // --- presence.update ---
     socket.ev.on('presence.update', ({ id, presences }) => {

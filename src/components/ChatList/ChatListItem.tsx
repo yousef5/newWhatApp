@@ -23,9 +23,21 @@ function getAvatarColor(jid: string): string {
 function formatChatName(chat: Chat): string {
   if (chat.name) return chat.name
   const raw = chat.jid.split('@')[0]
-  // Format as phone number if it's all digits
-  if (/^\d{8,}$/.test(raw)) {
+  const suffix = chat.jid.split('@')[1]
+  // Format as phone number if it's a whatsapp.net JID with digits
+  if (suffix === 's.whatsapp.net' && /^\d{8,}$/.test(raw)) {
     return '+' + raw.replace(/(\d{3})(?=\d{4,})/g, '$1 ')
+  }
+  // LID JIDs — show as number if all digits, otherwise raw
+  if (suffix === 'lid') {
+    if (/^\d{8,}$/.test(raw)) {
+      return '+' + raw.replace(/(\d{3})(?=\d{4,})/g, '$1 ')
+    }
+    return 'Contact ' + raw.substring(0, 8)
+  }
+  // Group JIDs
+  if (suffix === 'g.us') {
+    return 'Group'
   }
   return raw
 }

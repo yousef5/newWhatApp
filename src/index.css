@@ -17,12 +17,15 @@
   --color-border-secondary: #3a3a3a;
   --color-bubble-incoming: #0a0a0a;
   --color-bubble-outgoing: #a855f7;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
 }
 
 @layer base {
   body {
     overflow: hidden;
-    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
     background: #000000;
     color: #e0e0e0;
   }
