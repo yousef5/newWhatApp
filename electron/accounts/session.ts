@@ -187,6 +187,13 @@ export class BaileysSession extends EventEmitter {
 
         this.messageStore.insert(parsed)
 
+        // Auto-download media for images/videos/audio/stickers
+        if (parsed.type === 'image' || parsed.type === 'video' || parsed.type === 'audio' || parsed.type === 'sticker') {
+          this.downloadMedia(msg, parsed.id).catch((e) =>
+            console.error('Media download failed:', e)
+          )
+        }
+
         if (type === 'notify' && !parsed.isFromMe) {
           this.chatStore.incrementUnread(parsed.chatJid)
 
@@ -452,12 +459,38 @@ export class BaileysSession extends EventEmitter {
 
   // --- Message parser ---
 
+  private async downloadMedia(msg: any, messageId: string): Promise<void> {
+    try {
+      const mediaHandler = new (await import('../media/handler')).MediaHandler(this.accountId)
+      const { mediaPath, thumbnailPath } = await mediaHandler.downloadMessage(msg)
+      this.messageStore.updateMediaPath(messageId, mediaPath, thumbnailPath)
+      // Notify renderer of updated media paths
+      emitToRenderer('message:update', {
+        accountId: this.accountId,
+        messageId,
+        update: { mediaPath, thumbnailPath },
+      })
+    } catch (e) {
+      console.error(`Failed to download media for ${messageId}:`, e)
+    }
+  }
+
   parseMessage(msg: WAMessage): Message | null {
     if (!msg.key?.id || !msg.key.remoteJid) return null
 
     const chatJid = msg.key.remoteJid
     const isFromMe = !!msg.key.fromMe
-    const senderJid = isFromMe ? null : (msg.key.participant ?? chatJid)
+    const rawSenderJid = isFromMe ? null : (msg.key.participant ?? chatJid)
+    // Resolve sender name: try contact store, then pushName, then JID
+    let senderJid = rawSenderJid
+    if (rawSenderJid) {
+      const contact = this.contactStore.getContact(rawSenderJid)
+      if (contact?.name) {
+        senderJid = contact.name
+      } else if ((msg as any).pushName) {
+        senderJid = (msg as any).pushName
+      }
+    }
     const timestamp = typeof msg.messageTimestamp === 'number'
       ? msg.messageTimestamp
       : typeof msg.messageTimestamp === 'object'

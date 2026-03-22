@@ -55,6 +55,10 @@ export class MessageStore {
     this.db.prepare('DELETE FROM messages WHERE id = ?').run(id)
   }
 
+  updateMediaPath(id: string, mediaPath: string, thumbnailPath: string | null): void {
+    this.db.prepare('UPDATE messages SET media_path = ?, thumbnail_path = ? WHERE id = ?').run(mediaPath, thumbnailPath, id)
+  }
+
   getStarred(chatJid?: string): Message[] {
     let query = 'SELECT * FROM messages WHERE starred = 1'
     const params: any[] = []
