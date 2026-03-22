@@ -86,44 +86,61 @@ export default function MessageBubble({ message, showSender, showAvatar, senderA
 
         {/* Image */}
         {message.type === 'image' && (
-          <div className="mb-1.5 overflow-hidden border border-border-primary">
+          <div className="mb-1.5 overflow-hidden border border-border-primary relative">
             <FileImage
-              filePath={message.thumbnailPath || message.mediaPath}
-              className="max-w-full max-h-64 object-cover"
+              filePath={message.mediaPath || message.thumbnailPath}
+              className="max-w-[280px] max-h-64 object-cover"
               fallback="IMAGE"
             />
+            {!message.mediaPath && message.thumbnailPath && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <span className="text-white text-[10px] font-mono bg-black/50 px-2 py-1">PREVIEW</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Video */}
         {message.type === 'video' && (
-          <div className="mb-1.5 overflow-hidden border border-border-primary">
+          <div className="mb-1.5 overflow-hidden border border-border-primary relative">
             <FileImage
-              filePath={message.thumbnailPath || message.mediaPath}
-              className="max-w-full max-h-48 object-cover"
+              filePath={message.thumbnailPath}
+              className="max-w-[280px] max-h-48 object-cover"
               fallback="VIDEO"
             />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-10 h-10 bg-black/60 flex items-center justify-center border-2 border-white/50">
+                <span className="text-white text-lg ml-0.5">&#9654;</span>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Audio */}
+        {/* Audio / Voice note */}
         {message.type === 'audio' && (
-          <div className="mb-1.5 flex items-center gap-2 py-1">
-            <div className="w-8 h-8 bg-accent-green flex items-center justify-center text-white text-xs shrink-0">&#9654;</div>
+          <div className="mb-1.5 flex items-center gap-2 py-1 min-w-[180px]">
+            <div className="w-9 h-9 bg-accent-green flex items-center justify-center text-white shrink-0">
+              <span className="text-sm ml-0.5">&#9654;</span>
+            </div>
             <div className="flex-1">
-              <div className="h-1 bg-white/20"><div className="h-1 bg-white/50 w-1/3" /></div>
-              <div className="text-[9px] text-text-muted font-mono mt-1">VOICE NOTE</div>
+              <div className="h-[3px] bg-white/20"><div className="h-[3px] bg-accent-green w-0" /></div>
+              <div className="flex justify-between mt-1">
+                <span className="text-[9px] text-text-muted font-mono">VOICE NOTE</span>
+                {message.mediaSize && <span className="text-[9px] text-text-muted font-mono">{formatFileSize(message.mediaSize)}</span>}
+              </div>
             </div>
           </div>
         )}
 
         {/* Sticker */}
         {message.type === 'sticker' && (
-          <FileImage
-            filePath={message.mediaPath || message.thumbnailPath}
-            className="w-24 h-24 object-contain"
-            fallback="STICKER"
-          />
+          <div className="mb-1">
+            <FileImage
+              filePath={message.thumbnailPath || message.mediaPath}
+              className="w-28 h-28 object-contain"
+              fallback="STICKER"
+            />
+          </div>
         )}
 
         {/* Text */}

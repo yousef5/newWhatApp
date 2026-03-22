@@ -757,6 +757,29 @@ export class BaileysSession extends EventEmitter {
         null
     }
 
+    // Extract inline thumbnail from media messages and save to disk
+    let thumbnailPath: string | null = null
+    const thumbData =
+      messageContent.imageMessage?.jpegThumbnail ??
+      messageContent.videoMessage?.jpegThumbnail ??
+      messageContent.stickerMessage?.pngThumbnail ??
+      null
+
+    if (thumbData && thumbData.length > 0) {
+      try {
+        const { existsSync, mkdirSync, writeFileSync } = require('fs')
+        const { join } = require('path')
+        const { getAccountDir } = require('../storage/config')
+        const mediaDir = join(getAccountDir(this.accountId), 'media')
+        if (!existsSync(mediaDir)) mkdirSync(mediaDir, { recursive: true })
+        const ext = messageContent.stickerMessage ? '.png' : '.jpg'
+        thumbnailPath = join(mediaDir, `${msg.key.id}_thumb${ext}`)
+        writeFileSync(thumbnailPath, Buffer.from(thumbData))
+      } catch {
+        thumbnailPath = null
+      }
+    }
+
     return {
       id: msg.key.id!,
       chatJid,
@@ -767,7 +790,7 @@ export class BaileysSession extends EventEmitter {
       mediaPath: null,
       mediaMime,
       mediaSize,
-      thumbnailPath: null,
+      thumbnailPath,
       isFromMe,
       status: isFromMe ? 'sent' : 'delivered',
       starred: false,
