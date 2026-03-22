@@ -110,8 +110,17 @@ export default function App() {
         className="h-8 bg-bg-sidebar border-b-2 border-border-secondary flex items-center shrink-0 select-none"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
-        <div className="flex-1 px-4 text-xs text-text-primary font-bold font-mono uppercase tracking-widest">
-          MULTIWHATSAPP
+        <div className="flex-1 px-3 flex items-center gap-2">
+          <svg viewBox="0 0 512 512" fill="none" className="w-5 h-5 shrink-0">
+            <path d="M256 16L460 144v224L256 496 52 368V144L256 16z" fill="#0a0a0a" stroke="#a855f7" strokeWidth="16"/>
+            <g transform="translate(120, 150)">
+              <path d="M0 24C0 10.7 10.7 0 24 0h88c13.3 0 24 10.7 24 24v56c0 13.3-10.7 24-24 24H40l-24 24V104H24C10.7 104 0 93.3 0 80V24z" fill="#a855f7"/>
+            </g>
+            <g transform="translate(220, 210)">
+              <path d="M136 24C136 10.7 125.3 0 112 0H24C10.7 0 0 10.7 0 24v56c0 13.3 10.7 24 24 24h72l24 24V104h-8c13.3 0 24-10.7 24-24V24z" fill="#3b82f6"/>
+            </g>
+          </svg>
+          <span className="text-xs text-text-primary font-bold font-mono uppercase tracking-widest">MULTIWHATSAPP</span>
         </div>
         <div
           className="flex items-center h-full"
