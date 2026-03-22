@@ -21,21 +21,45 @@ export function useAccounts() {
   const removeMessage = useMessagesStore((s) => s.removeMessage)
   const clearMessages = useMessagesStore((s) => s.clear)
 
-  // Load accounts on mount
+  // Load accounts on mount + poll for chats until they appear
   useEffect(() => {
+    let pollTimer: ReturnType<typeof setInterval> | null = null
+
     const load = async () => {
       try {
         const accountList = await window.api.invoke('account:list', undefined)
         setAccounts(accountList)
-        // Set first account as active if none selected
         if (!useAccountsStore.getState().activeAccountId && accountList.length > 0) {
-          switchAccount(accountList[0].id)
+          const firstId = accountList[0].id
+          setActiveAccount(firstId)
+
+          // Poll for chats until they appear (connection might not be ready yet)
+          const tryLoadChats = async () => {
+            try {
+              const chats = await window.api.invoke('chat:list', { accountId: firstId })
+              useChatsStore.getState().setChats(chats)
+              if (chats.length > 0 && pollTimer) {
+                clearInterval(pollTimer)
+                pollTimer = null
+              }
+            } catch {}
+          }
+
+          tryLoadChats()
+          pollTimer = setInterval(tryLoadChats, 2000)
+
+          // Stop polling after 30 seconds regardless
+          setTimeout(() => {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
+          }, 30000)
         }
       } catch (err) {
         console.error('Failed to load accounts:', err)
       }
     }
     load()
+
+    return () => { if (pollTimer) clearInterval(pollTimer) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Switch account: set active, clear messages, load chats
