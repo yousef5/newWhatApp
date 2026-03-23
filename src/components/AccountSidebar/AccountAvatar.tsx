@@ -84,26 +84,32 @@ export default function AccountAvatar({
 
   return (
     <div className="relative shrink-0 flex flex-col items-center gap-1 py-2">
-      {/* Unread badge above avatar */}
+      {/* Unread badge — full width bar above avatar */}
       {unreadCount > 0 && (
         <div
-          className="flex items-center justify-center animate-pulse"
+          className="w-full flex items-center justify-center gap-[3px]"
           style={{
-            minWidth: '22px',
-            height: '20px',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '11px',
-            fontWeight: 800,
-            fontFamily: 'monospace',
-            letterSpacing: '-0.5px',
-            color: '#fff',
-            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5), 0 2px 4px rgba(0,0,0,0.3)',
-            border: '2px solid #000',
+            height: '18px',
+            background: 'linear-gradient(180deg, rgba(34,197,94,0.15) 0%, transparent 100%)',
+            borderTop: '1px solid rgba(34,197,94,0.3)',
           }}
         >
-          {unreadCount > 99 ? '99+' : unreadCount}
+          {/* Bell icon */}
+          <svg width="9" height="9" viewBox="0 0 16 16" fill="#22c55e">
+            <path d="M8 1.5a.5.5 0 0 1 .5.5v.6A4 4 0 0 1 12 7v2.5l1.3 1.9a.5.5 0 0 1-.4.8H3.1a.5.5 0 0 1-.4-.8L4 9.5V7a4 4 0 0 1 3.5-3.9V2a.5.5 0 0 1 .5-.5zM6.5 13h3a1.5 1.5 0 0 1-3 0z"/>
+          </svg>
+          {/* Count */}
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 900,
+              fontFamily: 'monospace',
+              color: '#22c55e',
+              textShadow: '0 0 6px rgba(34,197,94,0.6)',
+            }}
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
         </div>
       )}
 
