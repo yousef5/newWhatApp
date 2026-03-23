@@ -87,8 +87,21 @@ export default function AccountAvatar({
       {/* Unread badge above avatar */}
       {unreadCount > 0 && (
         <div
-          className="min-w-[20px] h-[18px] bg-accent-green flex items-center justify-center px-1.5"
-          style={{ borderRadius: '9px', fontSize: '10px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}
+          className="flex items-center justify-center animate-pulse"
+          style={{
+            minWidth: '22px',
+            height: '20px',
+            padding: '0 6px',
+            borderRadius: '10px',
+            fontSize: '11px',
+            fontWeight: 800,
+            fontFamily: 'monospace',
+            letterSpacing: '-0.5px',
+            color: '#fff',
+            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5), 0 2px 4px rgba(0,0,0,0.3)',
+            border: '2px solid #000',
+          }}
         >
           {unreadCount > 99 ? '99+' : unreadCount}
         </div>
