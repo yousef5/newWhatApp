@@ -14,6 +14,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [avatars, setAvatars] = useState<Record<string, string>>({})
   const [unreads, setUnreads] = useState<Record<string, number>>({})
+  const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
 
   // Load accounts on mount
   useEffect(() => {
@@ -37,21 +38,56 @@ export default function App() {
   }, [])
 
   const handleAddAccount = useCallback(async () => {
+    // Don't allow adding if there's already a pending account
+    if (pendingAccountId) return
+
     try {
       const account = await window.api.invoke('account:create', {
         name: `Account ${accounts.length + 1}`,
       })
+      setPendingAccountId(account.id)
       const updated = await window.api.invoke('account:list', undefined)
       setAccounts(updated)
       setActiveAccount(account.id)
     } catch (err) {
       console.error('Failed to create account:', err)
     }
-  }, [accounts.length, setAccounts, setActiveAccount])
+  }, [accounts.length, pendingAccountId, setAccounts, setActiveAccount])
+
+  const handleLoginSuccess = useCallback((accountId: string) => {
+    // Account successfully logged in — no longer pending
+    if (accountId === pendingAccountId) {
+      setPendingAccountId(null)
+    }
+  }, [pendingAccountId])
+
+  // If user switches away from pending account before logging in, remove it
+  const handleSwitchFromPending = useCallback(async (newAccountId: string) => {
+    if (pendingAccountId && newAccountId !== pendingAccountId) {
+      // Check if pending account was logged in
+      // Give it a moment to detect login
+      setTimeout(async () => {
+        if (pendingAccountId === useAccountsStore.getState().activeAccountId) return // still active, don't remove
+        // Remove the pending account that was never logged in
+        const stillPending = pendingAccountId // capture before async
+        setPendingAccountId(null)
+        await window.api.invoke('account:remove', { id: stillPending }).catch(() => {})
+        const updated = await window.api.invoke('account:list', undefined)
+        setAccounts(updated)
+      }, 500)
+    }
+    setActiveAccount(newAccountId)
+  }, [pendingAccountId, setAccounts, setActiveAccount])
 
   const switchAccount = useCallback(
-    (id: string) => setActiveAccount(id),
-    [setActiveAccount]
+    (id: string) => {
+      if (pendingAccountId && id !== pendingAccountId) {
+        handleSwitchFromPending(id)
+      } else {
+        setActiveAccount(id)
+      }
+    },
+    [pendingAccountId, setActiveAccount, handleSwitchFromPending]
   )
 
   const handleAvatarUpdate = useCallback((accountId: string, dataUrl: string) => {
@@ -97,7 +133,8 @@ export default function App() {
   }, [accounts, setAccounts])
 
   const handleRemoveAccount = useCallback(async (id: string) => {
-    if (!confirm('Remove this account? The WhatsApp session will be deleted.')) return
+    if (id !== pendingAccountId && !confirm('Remove this account? The WhatsApp session will be deleted.')) return
+    if (id === pendingAccountId) setPendingAccountId(null)
     await window.api.invoke('account:remove', { id })
     const updated = await window.api.invoke('account:list', undefined)
     setAccounts(updated)
@@ -186,9 +223,11 @@ export default function App() {
                 key={account.id}
                 accountId={account.id}
                 isActive={account.id === activeAccountId}
+                isPending={account.id === pendingAccountId}
                 onAvatarUpdate={handleAvatarUpdate}
                 onNameUpdate={handleNameUpdate}
                 onUnreadUpdate={handleUnreadUpdate}
+                onLoginSuccess={handleLoginSuccess}
               />
             ))}
           </div>

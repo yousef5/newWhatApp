@@ -3,13 +3,16 @@ import { useRef, useEffect, useCallback } from 'react'
 interface WhatsAppViewProps {
   accountId: string
   isActive: boolean
+  isPending?: boolean
   onAvatarUpdate?: (accountId: string, dataUrl: string) => void
   onNameUpdate?: (accountId: string, name: string) => void
   onUnreadUpdate?: (accountId: string, count: number) => void
+  onLoginSuccess?: (accountId: string) => void
 }
 
-export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNameUpdate, onUnreadUpdate }: WhatsAppViewProps) {
+export default function WhatsAppView({ accountId, isActive, isPending, onAvatarUpdate, onNameUpdate, onUnreadUpdate, onLoginSuccess }: WhatsAppViewProps) {
   const webviewRef = useRef<any>(null)
+  const loginDetectedRef = useRef(false)
   const unreadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarFoundRef = useRef(false)
@@ -138,15 +141,53 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
       setTimeout(extractUnreadCount, 3000)
     }
 
-    const handleTitleUpdate = () => extractUnreadCount()
+    const handleTitleUpdate = (_e: any, title: string) => {
+      extractUnreadCount()
+      // Detect successful login — title changes from "WhatsApp" (QR screen) to something with chats
+      if (!loginDetectedRef.current && isPending && onLoginSuccess) {
+        // WhatsApp Web title becomes "(X) WhatsApp" or just "WhatsApp" after login
+        // The QR page title is "WhatsApp Web" or similar — once chats load, it changes
+        if (title && !title.includes('QR') && !title.includes('Web')) {
+          loginDetectedRef.current = true
+          onLoginSuccess(accountId)
+        }
+      }
+    }
+
+    // Also poll for login detection via DOM
+    let loginCheckInterval: ReturnType<typeof setInterval> | null = null
+    if (isPending && onLoginSuccess) {
+      loginCheckInterval = setInterval(() => {
+        if (loginDetectedRef.current) {
+          if (loginCheckInterval) clearInterval(loginCheckInterval)
+          return
+        }
+        webview.executeJavaScript(`
+          (function() {
+            // Check if chat list is visible (means logged in)
+            const chatList = document.querySelector('[role="listitem"]')
+              || document.querySelector('[data-testid="chat-list"]')
+              || document.querySelector('[aria-label*="chat"]')
+            return !!chatList
+          })()
+        `).then((loggedIn: boolean) => {
+          if (loggedIn && !loginDetectedRef.current) {
+            loginDetectedRef.current = true
+            onLoginSuccess!(accountId)
+            if (loginCheckInterval) clearInterval(loginCheckInterval)
+          }
+        }).catch(() => {})
+      }, 3000)
+    }
 
     webview.addEventListener('dom-ready', handleDomReady)
     webview.addEventListener('page-title-updated', handleTitleUpdate)
     return () => {
       webview.removeEventListener('dom-ready', handleDomReady)
       webview.removeEventListener('page-title-updated', handleTitleUpdate)
+      if (loginCheckInterval) clearInterval(loginCheckInterval)
     }
-  }, [extractAvatar, extractUnreadCount])
+  }, [extractAvatar, extractUnreadCount, isPending, onLoginSuccess, accountId])
 
   useEffect(() => { avatarFoundRef.current = false }, [accountId])
 
