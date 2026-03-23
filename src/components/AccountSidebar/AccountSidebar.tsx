@@ -26,32 +26,20 @@ export default function AccountSidebar({
       <div className="w-10 h-10 mb-4 shrink-0">
         <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
           <defs>
-            <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#c084fc"/>
+            <linearGradient id="wg" x1="0.2" y1="0" x2="0.8" y2="1">
+              <stop offset="0%" stopColor="#e9d5ff"/>
+              <stop offset="40%" stopColor="#c084fc"/>
               <stop offset="100%" stopColor="#7c3aed"/>
             </linearGradient>
-            <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#60a5fa"/>
-              <stop offset="100%" stopColor="#2563eb"/>
-            </linearGradient>
           </defs>
-          <circle cx="50" cy="50" r="48" fill="#050505" stroke="#7c3aed" strokeWidth="2" opacity="0.8"/>
-          {/* Phone outline */}
-          <rect x="22" y="14" width="42" height="56" rx="8" fill="#111" stroke="#7c3aed" strokeWidth="1.5"/>
-          {/* Screen */}
-          <rect x="26" y="20" width="34" height="40" rx="2" fill="#0a0a0a"/>
-          {/* Chat bubbles on screen */}
-          <rect x="29" y="24" width="18" height="6" rx="3" fill="url(#lg1)" opacity="0.9"/>
-          <rect x="35" y="33" width="22" height="6" rx="3" fill="url(#lg2)" opacity="0.9"/>
-          <rect x="29" y="42" width="14" height="6" rx="3" fill="url(#lg1)" opacity="0.9"/>
-          <rect x="38" y="51" width="19" height="6" rx="3" fill="url(#lg2)" opacity="0.9"/>
-          {/* Account dots */}
-          <circle cx="74" cy="28" r="8" fill="#7c3aed" stroke="#050505" strokeWidth="2"/>
-          <circle cx="78" cy="48" r="8" fill="#3b82f6" stroke="#050505" strokeWidth="2"/>
-          <circle cx="72" cy="66" r="8" fill="#22c55e" stroke="#050505" strokeWidth="2"/>
-          <text x="74" y="32" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">1</text>
-          <text x="78" y="52" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">2</text>
-          <text x="72" y="70" textAnchor="middle" fontFamily="monospace" fontWeight="900" fontSize="9" fill="#fff">3</text>
+          <circle cx="50" cy="50" r="48" fill="#050508" stroke="#7c3aed" strokeWidth="2"/>
+          <path d="M24,28 L36,72 L46,40 L54,60 L64,28" fill="none" stroke="url(#wg)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="36" cy="72" r="2" fill="#e9d5ff"/>
+          <circle cx="46" cy="40" r="2" fill="#c084fc"/>
+          <circle cx="54" cy="60" r="2" fill="#a855f7"/>
+          <circle cx="34" cy="84" r="5" fill="#7c3aed"/>
+          <circle cx="50" cy="84" r="5" fill="#3b82f6"/>
+          <circle cx="66" cy="84" r="5" fill="#22c55e"/>
         </svg>
       </div>
 

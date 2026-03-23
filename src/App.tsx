@@ -120,17 +120,16 @@ export default function App() {
       >
         <div className="flex-1 px-3 flex items-center gap-2">
           <svg viewBox="0 0 100 100" fill="none" className="w-5 h-5 shrink-0">
-            <circle cx="50" cy="50" r="48" fill="#050505" stroke="#7c3aed" strokeWidth="3"/>
-            <rect x="22" y="14" width="42" height="56" rx="8" fill="#111" stroke="#7c3aed" strokeWidth="2"/>
-            <rect x="26" y="20" width="34" height="40" rx="2" fill="#0a0a0a"/>
-            <rect x="29" y="26" width="18" height="6" rx="3" fill="#a855f7"/>
-            <rect x="35" y="37" width="22" height="6" rx="3" fill="#3b82f6"/>
-            <rect x="29" y="48" width="14" height="6" rx="3" fill="#a855f7"/>
-            <circle cx="76" cy="30" r="7" fill="#7c3aed" stroke="#050505" strokeWidth="2"/>
-            <circle cx="78" cy="50" r="7" fill="#3b82f6" stroke="#050505" strokeWidth="2"/>
-            <circle cx="74" cy="68" r="7" fill="#22c55e" stroke="#050505" strokeWidth="2"/>
+            <defs>
+              <linearGradient id="twg" x1="0.2" y1="0" x2="0.8" y2="1">
+                <stop offset="0%" stopColor="#e9d5ff"/>
+                <stop offset="100%" stopColor="#7c3aed"/>
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="48" fill="#050508" stroke="#7c3aed" strokeWidth="3"/>
+            <path d="M24,28 L36,72 L46,40 L54,60 L64,28" fill="none" stroke="url(#twg)" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="text-xs text-text-primary font-bold font-mono uppercase tracking-widest">MULTI WA</span>
+          <span className="text-xs text-text-primary font-bold font-mono uppercase tracking-widest">MW</span>
         </div>
         <div
           className="flex items-center h-full"
