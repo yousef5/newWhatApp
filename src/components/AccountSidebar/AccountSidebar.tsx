@@ -56,7 +56,7 @@ export default function AccountSidebar({
       </div>
 
       {/* Account list */}
-      <div className="flex-1 overflow-y-auto flex flex-col items-center gap-2 w-full px-[10px] scrollbar-thin">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center gap-1 w-full px-[8px] scrollbar-thin">
         {accounts.map((account) => (
           <AccountAvatar
             key={account.id}

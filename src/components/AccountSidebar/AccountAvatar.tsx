@@ -83,13 +83,24 @@ export default function AccountAvatar({
   }
 
   return (
-    <div className="relative shrink-0">
+    <div className="relative shrink-0 flex flex-col items-center gap-1 py-2">
+      {/* Unread badge above avatar */}
+      {unreadCount > 0 && !isActive && (
+        <div
+          className="min-w-[20px] h-[18px] bg-accent-green flex items-center justify-center px-1.5"
+          style={{ borderRadius: '9px', fontSize: '10px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}
+        >
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </div>
+      )}
+
+      {/* Avatar */}
       <button
         onClick={onClick}
         onContextMenu={handleContextMenu}
-        className={`relative w-[42px] h-[42px] flex items-center justify-center cursor-pointer overflow-hidden ${
+        className={`relative w-[44px] h-[44px] flex items-center justify-center cursor-pointer overflow-hidden ${
           isActive
-            ? 'border-2 border-accent-purple'
+            ? 'border-[3px] border-accent-purple'
             : 'border-2 border-transparent hover:border-border-secondary'
         }`}
         style={{ borderRadius: '50%' }}
@@ -112,16 +123,6 @@ export default function AccountAvatar({
             }}
           >
             {getInitials(account.name)}
-          </div>
-        )}
-
-        {/* Unread badge */}
-        {unreadCount > 0 && !isActive && (
-          <div
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-accent-green flex items-center justify-center px-1"
-            style={{ borderRadius: '9px', fontSize: '10px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
           </div>
         )}
       </button>
