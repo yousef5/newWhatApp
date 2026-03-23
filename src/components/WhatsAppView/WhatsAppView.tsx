@@ -157,11 +157,11 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
         ::-webkit-scrollbar-thumb { background: #333; }
       `)
 
-      // Try extracting avatar at increasing intervals
-      setTimeout(extractAvatar, 5000)
-      setTimeout(extractAvatar, 12000)
-      setTimeout(extractAvatar, 25000)
-      setTimeout(extractUnreadCount, 8000)
+      // Extract avatar aggressively — try every 2s for the first 20s
+      for (let i = 1; i <= 10; i++) {
+        setTimeout(extractAvatar, i * 2000)
+      }
+      setTimeout(extractUnreadCount, 3000)
     }
 
     const handleTitleUpdate = () => extractUnreadCount()
@@ -179,14 +179,14 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
 
   // Poll unread every 5s
   useEffect(() => {
-    unreadIntervalRef.current = setInterval(extractUnreadCount, 5000)
+    unreadIntervalRef.current = setInterval(extractUnreadCount, 3000)
     return () => { if (unreadIntervalRef.current) clearInterval(unreadIntervalRef.current) }
   }, [extractUnreadCount])
 
   // Retry avatar every 30s if not found
   useEffect(() => {
     if (!avatarFoundRef.current) {
-      avatarIntervalRef.current = setInterval(extractAvatar, 30000)
+      avatarIntervalRef.current = setInterval(extractAvatar, 10000)
     }
     return () => { if (avatarIntervalRef.current) clearInterval(avatarIntervalRef.current) }
   }, [extractAvatar])

@@ -42,27 +42,20 @@ export default function AccountAvatar({
 
   const submitRename = () => {
     const trimmed = editName.trim()
-    if (trimmed && trimmed !== account.name) {
-      onRename(account.id, trimmed)
-    }
+    if (trimmed && trimmed !== account.name) onRename(account.id, trimmed)
     setEditing(false)
   }
 
-  // Show rename input
+  const imgSrc = avatar || account.customAvatar
+
   if (editing) {
     return (
-      <div className="w-[42px] shrink-0 flex flex-col items-center gap-1">
-        <div
-          className="w-[42px] h-[42px] flex items-center justify-center overflow-hidden border-2 border-accent-purple"
-          style={{ borderRadius: '50%' }}
-        >
-          {avatar ? (
-            <img src={avatar} alt="" className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+      <div className="w-full shrink-0 flex flex-col items-center gap-1 py-1">
+        <div className="w-[44px] h-[44px] overflow-hidden" style={{ borderRadius: '50%', border: '2px solid #a855f7' }}>
+          {imgSrc ? (
+            <img src={imgSrc} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div
-              className="w-full h-full flex items-center justify-center text-sm font-bold font-mono"
-              style={{ borderRadius: '50%', backgroundColor: account.avatarColor, color: '#fff' }}
-            >
+            <div className="w-full h-full flex items-center justify-center text-sm font-bold font-mono" style={{ backgroundColor: account.avatarColor, color: '#fff' }}>
               {getInitials(account.name)}
             </div>
           )}
@@ -72,10 +65,7 @@ export default function AccountAvatar({
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
           onBlur={submitRename}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submitRename()
-            if (e.key === 'Escape') setEditing(false)
-          }}
+          onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setEditing(false) }}
           className="w-[54px] text-[8px] text-center bg-bg-tertiary border border-accent-purple text-text-primary px-1 py-0.5 font-mono outline-none"
         />
       </div>
@@ -83,68 +73,102 @@ export default function AccountAvatar({
   }
 
   return (
-    <div className="relative shrink-0 flex flex-col items-center gap-1 py-2">
-      {/* Unread badge — full width bar above avatar */}
+    <div className="relative shrink-0 w-full flex flex-col items-center py-1">
+      {/* Unread badge */}
       {unreadCount > 0 && (
-        <div
-          className="w-full flex items-center justify-center gap-[3px]"
+        <div className="w-full flex items-center justify-center gap-[3px] mb-1"
           style={{
-            height: '18px',
-            background: 'linear-gradient(180deg, rgba(34,197,94,0.15) 0%, transparent 100%)',
-            borderTop: '1px solid rgba(34,197,94,0.3)',
+            height: '16px',
+            background: 'linear-gradient(180deg, rgba(34,197,94,0.12) 0%, transparent 100%)',
           }}
         >
-          {/* Bell icon */}
-          <svg width="9" height="9" viewBox="0 0 16 16" fill="#22c55e">
+          <svg width="8" height="8" viewBox="0 0 16 16" fill="#22c55e">
             <path d="M8 1.5a.5.5 0 0 1 .5.5v.6A4 4 0 0 1 12 7v2.5l1.3 1.9a.5.5 0 0 1-.4.8H3.1a.5.5 0 0 1-.4-.8L4 9.5V7a4 4 0 0 1 3.5-3.9V2a.5.5 0 0 1 .5-.5zM6.5 13h3a1.5 1.5 0 0 1-3 0z"/>
           </svg>
-          {/* Count */}
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 900,
-              fontFamily: 'monospace',
-              color: '#22c55e',
-              textShadow: '0 0 6px rgba(34,197,94,0.6)',
-            }}
-          >
+          <span style={{ fontSize: '9px', fontWeight: 900, fontFamily: 'monospace', color: '#22c55e', textShadow: '0 0 4px rgba(34,197,94,0.5)' }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         </div>
       )}
 
-      {/* Avatar */}
+      {/* Active indicator — left bar */}
+      {isActive && (
+        <div
+          className="absolute left-0 top-1/2"
+          style={{
+            width: '3px',
+            height: '28px',
+            transform: 'translateY(-50%)',
+            background: 'linear-gradient(180deg, #a855f7 0%, #7c3aed 100%)',
+            boxShadow: '0 0 8px rgba(168,85,247,0.6)',
+          }}
+        />
+      )}
+
+      {/* Avatar button */}
       <button
         onClick={onClick}
         onContextMenu={handleContextMenu}
-        className={`relative w-[44px] h-[44px] flex items-center justify-center cursor-pointer overflow-hidden ${
-          isActive
-            ? 'border-[3px] border-accent-purple'
-            : 'border-2 border-transparent hover:border-border-secondary'
-        }`}
-        style={{ borderRadius: '50%' }}
+        className="relative cursor-pointer group"
         title={`${account.name} (right-click to edit)`}
+        style={{ outline: 'none' }}
       >
-        {avatar || account.customAvatar ? (
-          <img
-            src={avatar || account.customAvatar}
-            alt={account.name}
-            className="w-full h-full object-cover"
-            style={{ borderRadius: '50%' }}
-          />
-        ) : (
+        {/* Glow ring for active */}
+        <div
+          className="w-[46px] h-[46px] flex items-center justify-center transition-all duration-200"
+          style={{
+            borderRadius: '50%',
+            background: isActive
+              ? 'linear-gradient(135deg, #a855f7, #3b82f6)'
+              : 'transparent',
+            padding: isActive ? '2px' : '0',
+          }}
+        >
           <div
-            className="w-full h-full flex items-center justify-center text-sm font-bold font-mono"
+            className="w-full h-full overflow-hidden transition-all duration-200"
             style={{
               borderRadius: '50%',
-              backgroundColor: isActive ? account.avatarColor : '#141414',
-              color: isActive ? '#fff' : '#888888',
+              border: isActive ? '2px solid #000' : '2px solid transparent',
+              transform: isActive ? 'scale(1)' : 'scale(0.9)',
+              opacity: isActive ? 1 : 0.7,
             }}
           >
-            {getInitials(account.name)}
+            {imgSrc ? (
+              <img src={imgSrc} alt={account.name} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center font-bold font-mono"
+                style={{
+                  borderRadius: '50%',
+                  backgroundColor: account.avatarColor,
+                  color: '#fff',
+                  fontSize: '14px',
+                }}
+              >
+                {getInitials(account.name)}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Hover overlay */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center pointer-events-none"
+          style={{
+            borderRadius: '50%',
+            background: 'rgba(0,0,0,0.3)',
+          }}
+        />
       </button>
+
+      {/* Name label for active account */}
+      {isActive && (
+        <div className="mt-1 w-full text-center">
+          <span style={{ fontSize: '7px', fontWeight: 700, fontFamily: 'monospace', color: '#a855f7', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            {account.name.length > 8 ? account.name.slice(0, 8) : account.name}
+          </span>
+        </div>
+      )}
 
       {/* Context menu */}
       {showMenu && (
@@ -154,30 +178,18 @@ export default function AccountAvatar({
             className="fixed z-50 bg-bg-secondary border-2 border-border-secondary py-1 min-w-[160px]"
             style={{ left: menuPos.x, top: menuPos.y }}
           >
-            <button
-              onClick={handleRename}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary"
-            >
+            <button onClick={handleRename} className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary">
               RENAME
             </button>
-            <button
-              onClick={() => { setShowMenu(false); onChangeAvatar(account.id) }}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary"
-            >
+            <button onClick={() => { setShowMenu(false); onChangeAvatar(account.id) }} className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary">
               CHANGE AVATAR
             </button>
-            {(avatar || account.customAvatar) && (
-              <button
-                onClick={() => { setShowMenu(false); onRemoveAvatar(account.id) }}
-                className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary"
-              >
+            {imgSrc && (
+              <button onClick={() => { setShowMenu(false); onRemoveAvatar(account.id) }} className="w-full text-left px-3 py-1.5 text-[11px] text-text-primary hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary">
                 REMOVE AVATAR
               </button>
             )}
-            <button
-              onClick={() => { setShowMenu(false); onRemoveAccount(account.id) }}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-accent-red hover:bg-bg-tertiary cursor-pointer font-mono"
-            >
+            <button onClick={() => { setShowMenu(false); onRemoveAccount(account.id) }} className="w-full text-left px-3 py-1.5 text-[11px] text-accent-red hover:bg-bg-tertiary cursor-pointer font-mono">
               REMOVE ACCOUNT
             </button>
           </div>
