@@ -5,44 +5,59 @@ pkgdesc="Multi-account WhatsApp desktop client"
 arch=('x86_64')
 url="https://github.com/yousef5/newWhatApp"
 license=('MIT')
-depends=('electron' 'gtk3' 'nss' 'libxss')
+depends=('gtk3' 'nss' 'libxss' 'alsa-lib' 'libxtst' 'libdrm' 'mesa')
 makedepends=('bun' 'nodejs')
 source=()
+options=('!strip')
 
 build() {
   cd "$startdir"
-  bun install
-  bun run build
+  bun install --frozen-lockfile 2>/dev/null || bun install
+  bun run package:linux
 }
 
 package() {
   cd "$startdir"
 
-  # Install the built app
+  # Install the AppImage contents (extract and install)
   install -dm755 "$pkgdir/opt/$pkgname"
-  cp -r out/* "$pkgdir/opt/$pkgname/"
-  cp package.json "$pkgdir/opt/$pkgname/"
 
-  # Install icon
-  install -Dm644 resources/icon-256.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/$pkgname.png"
-  install -Dm644 resources/icon-128.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/$pkgname.png"
-  install -Dm644 resources/icon-64.png "$pkgdir/usr/share/icons/hicolor/64x64/apps/$pkgname.png"
-  install -Dm644 resources/icon-48.png "$pkgdir/usr/share/icons/hicolor/48x48/apps/$pkgname.png"
-  install -Dm644 resources/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/$pkgname.svg"
+  # Extract AppImage
+  chmod +x release/MultiWhatsApp-${pkgver}.AppImage
+  release/MultiWhatsApp-${pkgver}.AppImage --appimage-extract 2>/dev/null
+
+  # Copy extracted contents
+  cp -r squashfs-root/* "$pkgdir/opt/$pkgname/"
+  rm -rf squashfs-root
+
+  # Create launcher script
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" << EOF
+#!/bin/bash
+exec /opt/$pkgname/multiwhatsapp "\$@"
+EOF
+
+  # Install icons
+  for size in 16 32 48 64 128 256 512; do
+    if [ -f "resources/icon-${size}.png" ]; then
+      install -Dm644 "resources/icon-${size}.png" \
+        "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/$pkgname.png"
+    fi
+  done
+  install -Dm644 resources/icon.png \
+    "$pkgdir/usr/share/icons/hicolor/1024x1024/apps/$pkgname.png"
 
   # Install desktop entry
   install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/$pkgname.desktop" << EOF
 [Desktop Entry]
 Name=MultiWhatsApp
+GenericName=WhatsApp Client
 Comment=Multi-account WhatsApp desktop client
-Exec=electron /opt/$pkgname/main/index.js
+Exec=$pkgname %U
 Icon=$pkgname
 Type=Application
 Categories=Network;InstantMessaging;Chat;
 Keywords=whatsapp;chat;messaging;multi-account;
 StartupWMClass=MultiWhatsApp
+MimeType=x-scheme-handler/whatsapp;
 EOF
-
-  # Install license
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 2>/dev/null || true
 }
