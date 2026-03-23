@@ -13,6 +13,7 @@ export default function App() {
 
   const [showSettings, setShowSettings] = useState(false)
   const [avatars, setAvatars] = useState<Record<string, string>>({})
+  const [unreads, setUnreads] = useState<Record<string, number>>({})
 
   // Load accounts on mount
   useEffect(() => {
@@ -62,6 +63,13 @@ export default function App() {
     const updated = accounts.map(a => a.id === accountId ? { ...a, name } : a)
     setAccounts(updated)
   }, [accounts, setAccounts])
+
+  const handleUnreadUpdate = useCallback((accountId: string, count: number) => {
+    setUnreads((prev) => {
+      if (prev[accountId] === count) return prev
+      return { ...prev, [accountId]: count }
+    })
+  }, [])
 
   const handleRenameAccount = useCallback((id: string, name: string) => {
     window.api.invoke('account:rename', { id, name }).catch(() => {})
@@ -157,6 +165,7 @@ export default function App() {
           accounts={accounts}
           activeAccountId={activeAccountId}
           avatars={avatars}
+          unreads={unreads}
           onSwitchAccount={switchAccount}
           onAddAccount={handleAddAccount}
           onOpenSettings={() => setShowSettings(true)}
@@ -180,6 +189,7 @@ export default function App() {
                 isActive={account.id === activeAccountId}
                 onAvatarUpdate={handleAvatarUpdate}
                 onNameUpdate={handleNameUpdate}
+                onUnreadUpdate={handleUnreadUpdate}
               />
             ))}
           </div>

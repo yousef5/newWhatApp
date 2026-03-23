@@ -5,6 +5,7 @@ interface AccountSidebarProps {
   accounts: Account[]
   activeAccountId: string | null
   avatars: Record<string, string>
+  unreads: Record<string, number>
   onSwitchAccount: (id: string) => void
   onAddAccount: () => void
   onOpenSettings: () => void
@@ -15,7 +16,7 @@ interface AccountSidebarProps {
 }
 
 export default function AccountSidebar({
-  accounts, activeAccountId, avatars,
+  accounts, activeAccountId, avatars, unreads,
   onSwitchAccount, onAddAccount, onOpenSettings,
   onRenameAccount, onChangeAvatar, onRemoveAvatar, onRemoveAccount,
 }: AccountSidebarProps) {
@@ -62,6 +63,7 @@ export default function AccountSidebar({
             account={account}
             isActive={account.id === activeAccountId}
             avatar={avatars[account.id]}
+            unreadCount={unreads[account.id] || 0}
             onClick={() => onSwitchAccount(account.id)}
             onRename={onRenameAccount}
             onChangeAvatar={onChangeAvatar}

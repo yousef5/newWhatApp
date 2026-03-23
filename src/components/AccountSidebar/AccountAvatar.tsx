@@ -6,6 +6,7 @@ interface AccountAvatarProps {
   account: Account
   isActive: boolean
   avatar?: string | null
+  unreadCount?: number
   onClick: () => void
   onRename: (id: string, name: string) => void
   onChangeAvatar: (id: string) => void
@@ -14,7 +15,7 @@ interface AccountAvatarProps {
 }
 
 export default function AccountAvatar({
-  account, isActive, avatar, onClick,
+  account, isActive, avatar, unreadCount = 0, onClick,
   onRename, onChangeAvatar, onRemoveAvatar, onRemoveAccount,
 }: AccountAvatarProps) {
   const [showMenu, setShowMenu] = useState(false)
@@ -111,6 +112,16 @@ export default function AccountAvatar({
             }}
           >
             {getInitials(account.name)}
+          </div>
+        )}
+
+        {/* Unread badge */}
+        {unreadCount > 0 && !isActive && (
+          <div
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-accent-green flex items-center justify-center px-1"
+            style={{ borderRadius: '9px', fontSize: '10px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
           </div>
         )}
       </button>
