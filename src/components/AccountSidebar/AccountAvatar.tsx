@@ -85,7 +85,7 @@ export default function AccountAvatar({
   return (
     <div className="relative shrink-0 flex flex-col items-center gap-1 py-2">
       {/* Unread badge above avatar */}
-      {unreadCount > 0 && !isActive && (
+      {unreadCount > 0 && (
         <div
           className="min-w-[20px] h-[18px] bg-accent-green flex items-center justify-center px-1.5"
           style={{ borderRadius: '9px', fontSize: '10px', fontWeight: 900, color: '#fff', fontFamily: 'monospace' }}
