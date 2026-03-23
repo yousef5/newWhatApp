@@ -15,9 +15,6 @@
   --color-text-muted: #555555;
   --color-border-primary: #2a2a2a;
   --color-border-secondary: #3a3a3a;
-  --color-bubble-incoming: #0a0a0a;
-  --color-bubble-outgoing: #a855f7;
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
   --font-body: 'Space Grotesk', system-ui, sans-serif;
 }

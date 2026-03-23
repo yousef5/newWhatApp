@@ -1,6 +1,5 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, session, Notification } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, session } from 'electron'
 import { join } from 'path'
-import { setMainWindow } from './ipc/emitter'
 import { registerIPCHandlers } from './ipc/handlers'
 import { listAccounts } from './storage/config'
 
@@ -55,7 +54,6 @@ function createWindow(): void {
     },
   })
 
-  setMainWindow(mainWindow)
   registerIPCHandlers()
 
   // Setup permissions for default session
@@ -99,7 +97,6 @@ function createWindow(): void {
     })
   })
 
-  mainWindow.on('close', () => {})
   mainWindow.on('closed', () => { mainWindow = null })
 
   if (process.env.ELECTRON_RENDERER_URL) {
