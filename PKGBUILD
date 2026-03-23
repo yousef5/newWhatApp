@@ -26,12 +26,22 @@ package() {
   chmod +x release/MultiWhatsApp-${pkgver}.AppImage
   release/MultiWhatsApp-${pkgver}.AppImage --appimage-extract 2>/dev/null
 
-  # Copy extracted contents with proper permissions
+  # Copy extracted contents
   cp -r squashfs-root/* "$pkgdir/opt/$pkgname/"
   rm -rf squashfs-root
 
-  # Fix permissions — make everything readable
-  chmod -R a+rX "$pkgdir/opt/$pkgname/"
+  # Fix ALL permissions — directories need 755, files need 644, binaries need 755
+  find "$pkgdir/opt/$pkgname/" -type d -exec chmod 755 {} \;
+  find "$pkgdir/opt/$pkgname/" -type f -exec chmod 644 {} \;
+  # Make binaries executable
+  chmod 755 "$pkgdir/opt/$pkgname/multiwhatsapp"
+  chmod 755 "$pkgdir/opt/$pkgname/chrome_crashpad_handler"
+  chmod 755 "$pkgdir/opt/$pkgname/chrome-sandbox"
+  chmod 755 "$pkgdir/opt/$pkgname/libEGL.so"
+  chmod 755 "$pkgdir/opt/$pkgname/libGLESv2.so"
+  chmod 755 "$pkgdir/opt/$pkgname/libffmpeg.so"
+  chmod 755 "$pkgdir/opt/$pkgname/libvk_swiftshader.so"
+  chmod 755 "$pkgdir/opt/$pkgname/libvulkan.so.1"
   # chrome-sandbox needs SUID
   chmod 4755 "$pkgdir/opt/$pkgname/chrome-sandbox"
 
