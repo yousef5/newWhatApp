@@ -1,0 +1,77 @@
+appId: com.multiwhatsapp.app
+productName: MultiWhatsApp
+copyright: Copyright © 2026 MultiWhatsApp
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - out/**/*
+  - "!node_modules/**/*"
+
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+
+# Linux
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+    - target: rpm
+      arch:
+        - x64
+  icon: resources/icon.png
+  category: Network
+  desktop:
+    Name: MultiWhatsApp
+    Comment: Multi-account WhatsApp desktop client
+    Categories: Network;InstantMessaging;Chat;
+    Keywords: whatsapp;chat;messaging;multi-account;
+
+# Windows
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: resources/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: MultiWhatsApp
+
+# macOS
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: resources/icon.png
+  category: public.app-category.social-networking
+  darkModeSupport: true
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications

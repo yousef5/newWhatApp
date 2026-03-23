@@ -1,30 +1,30 @@
 {
-  "name": "newwhatapp",
+  "name": "multiwhatsapp",
+  "productName": "MultiWhatsApp",
   "version": "2.0.0",
-  "description": "Multi-account WhatsApp desktop client using embedded WhatsApp Web",
+  "description": "Multi-account WhatsApp desktop client",
   "main": "./out/main/index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "preview": "electron-vite preview"
+    "preview": "electron-vite preview",
+    "package": "electron-vite build && electron-builder --config electron-builder.yml",
+    "package:linux": "electron-vite build && electron-builder --linux --config electron-builder.yml",
+    "package:win": "electron-vite build && electron-builder --win --config electron-builder.yml",
+    "package:mac": "electron-vite build && electron-builder --mac --config electron-builder.yml"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yousef5/newWhatApp.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "yousef5",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/yousef5/newWhatApp/issues"
   },
   "homepage": "https://github.com/yousef5/newWhatApp#readme",
   "dependencies": {
-    "electron": "^41.0.3",
     "electron-vite": "^5.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -38,6 +38,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "4",
     "autoprefixer": "^10.4.27",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"

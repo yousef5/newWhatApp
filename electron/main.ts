@@ -45,6 +45,7 @@ function createWindow(): void {
     frame: false,
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#000000',
+    icon: join(__dirname, '../../resources/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -101,14 +102,17 @@ function createWindow(): void {
 
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
-    mainWindow.webContents.openDevTools()
+    if (process.env.NODE_ENV !== 'production') {
+      mainWindow.webContents.openDevTools()
+    }
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
 function createTray(): void {
-  tray = new Tray(nativeImage.createEmpty())
+  const trayIcon = nativeImage.createFromPath(join(__dirname, '../../resources/icon-32.png'))
+  tray = new Tray(trayIcon.isEmpty() ? nativeImage.createEmpty() : trayIcon)
   tray.setToolTip('MultiWhatsApp')
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show', click: () => mainWindow?.show() },
