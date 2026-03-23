@@ -26,14 +26,19 @@ package() {
   chmod +x release/MultiWhatsApp-${pkgver}.AppImage
   release/MultiWhatsApp-${pkgver}.AppImage --appimage-extract 2>/dev/null
 
-  # Copy extracted contents
+  # Copy extracted contents with proper permissions
   cp -r squashfs-root/* "$pkgdir/opt/$pkgname/"
   rm -rf squashfs-root
+
+  # Fix permissions — make everything readable
+  chmod -R a+rX "$pkgdir/opt/$pkgname/"
+  # chrome-sandbox needs SUID
+  chmod 4755 "$pkgdir/opt/$pkgname/chrome-sandbox"
 
   # Create launcher script
   install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" << EOF
 #!/bin/bash
-exec /opt/$pkgname/multiwhatsapp "\$@"
+exec /opt/$pkgname/multiwhatsapp --no-sandbox "\$@"
 EOF
 
   # Install icons
