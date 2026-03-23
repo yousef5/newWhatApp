@@ -67,7 +67,7 @@ jobs:
       - name: Setup Arch build environment
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git nodejs fakeroot
+          pacman -S --noconfirm base-devel git nodejs fakeroot unzip
 
       - uses: actions/checkout@v4
 
