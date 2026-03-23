@@ -14,74 +14,65 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
   const avatarIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarFoundRef = useRef(false)
 
-  // Extract avatar by capturing the profile image area via canvas
   const extractAvatar = useCallback(() => {
     const webview = webviewRef.current
     if (!webview || avatarFoundRef.current) return
 
+    // Inject a script that watches for the avatar image and extracts it
     webview.executeJavaScript(`
       (function() {
         try {
-          // Strategy 1: Find the user's own avatar in the sidebar header
-          // It's typically the first img with a blob: or https: src in the header area
-          const candidates = []
-          const allImgs = document.querySelectorAll('img')
-          for (const img of allImgs) {
-            if (!img.src || img.src.startsWith('data:image/gif') || img.src.includes('emoji')) continue
+          // Method 1: Look for all images and find the profile avatar
+          const imgs = Array.from(document.querySelectorAll('img'))
+          let bestImg = null
+          let bestScore = -1
+
+          for (const img of imgs) {
+            if (!img.src) continue
+            if (img.src.startsWith('data:image/gif')) continue
+            if (img.src.includes('emoji') || img.src.includes('status')) continue
+
             const rect = img.getBoundingClientRect()
-            if (rect.width < 20 || rect.height < 20) continue
-            // Score by position — top-left images are more likely the profile avatar
-            const score = (rect.top < 80 ? 100 : 0) + (rect.left < 100 ? 50 : 0) + (rect.width >= 30 && rect.width <= 50 ? 30 : 0)
-            if (score > 0) {
-              candidates.push({ img, score, rect })
-            }
-          }
-          // Sort by score descending, pick the best
-          candidates.sort((a, b) => b.score - a.score)
+            if (rect.width < 15 || rect.height < 15) continue
+            if (rect.width > 100) continue  // too big, probably not an avatar
 
-          const best = candidates[0]
-          if (!best) return Promise.resolve(null)
+            let score = 0
+            // Top area of sidebar
+            if (rect.top < 70) score += 200
+            else if (rect.top < 120) score += 50
+            // Left side
+            if (rect.left < 80) score += 100
+            else if (rect.left < 200) score += 30
+            // Right size range for avatar
+            if (rect.width >= 30 && rect.width <= 50) score += 80
+            else if (rect.width >= 20 && rect.width <= 60) score += 40
+            // Has alt text (profile images usually do)
+            if (img.alt && img.alt.length > 0) score += 50
+            // Circular (border-radius)
+            const style = window.getComputedStyle(img)
+            if (style.borderRadius === '50%' || parseInt(style.borderRadius) > 15) score += 60
 
-          const img = best.img
-          const alt = img.alt || null
-
-          // Convert image to data URL using canvas
-          const canvas = document.createElement('canvas')
-          const size = 128
-          canvas.width = size
-          canvas.height = size
-          const ctx = canvas.getContext('2d')
-          if (!ctx) return Promise.resolve(null)
-
-          // If image is already loaded and same-origin, draw directly
-          if (img.complete && img.naturalWidth > 0) {
-            ctx.drawImage(img, 0, 0, size, size)
-            try {
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
-              if (dataUrl && dataUrl.length > 100) {
-                return Promise.resolve({ avatar: dataUrl, name: alt })
-              }
-            } catch(e) {
-              // Tainted canvas — need to fetch
+            if (score > bestScore) {
+              bestScore = score
+              bestImg = img
             }
           }
 
-          // Fallback: fetch the image URL and convert
-          if (img.src.startsWith('blob:') || img.src.startsWith('http')) {
-            return fetch(img.src)
-              .then(r => r.blob())
-              .then(blob => {
-                return new Promise(resolve => {
-                  const reader = new FileReader()
-                  reader.onload = () => resolve({ avatar: reader.result, name: alt })
-                  reader.onerror = () => resolve(null)
-                  reader.readAsDataURL(blob)
-                })
-              })
-              .catch(() => null)
-          }
+          if (!bestImg || bestScore < 150) return Promise.resolve(null)
 
-          return Promise.resolve(null)
+          const alt = bestImg.alt || null
+          const src = bestImg.src
+
+          // Fetch and convert to data URL (handles blob: and https: URLs)
+          return fetch(src)
+            .then(r => r.blob())
+            .then(blob => new Promise(resolve => {
+              const reader = new FileReader()
+              reader.onload = () => resolve({ avatar: reader.result, name: alt })
+              reader.onerror = () => resolve(null)
+              reader.readAsDataURL(blob)
+            }))
+            .catch(() => null)
         } catch(e) {
           return Promise.resolve(null)
         }
@@ -97,7 +88,6 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     }).catch(() => {})
   }, [accountId, onAvatarUpdate, onNameUpdate])
 
-  // Extract unread count from page title or DOM
   const extractUnreadCount = useCallback(() => {
     const webview = webviewRef.current
     if (!webview || !onUnreadUpdate) return
@@ -105,29 +95,16 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     webview.executeJavaScript(`
       (function() {
         try {
-          // Best method: page title shows "(X) WhatsApp"
-          const titleMatch = document.title.match(/\\((\\d+)\\)/)
-          if (titleMatch) return parseInt(titleMatch[1], 10)
-
-          // Fallback: count unread badges in chat list
-          let total = 0
-          const badges = document.querySelectorAll('[aria-label*="unread"]')
-          for (const badge of badges) {
-            const match = badge.getAttribute('aria-label')?.match(/(\\d+)\\s*unread/)
-            if (match) total += parseInt(match[1], 10)
-          }
-          if (total > 0) return total
-
-          // Another fallback: spans with just numbers inside chat items
-          const spans = document.querySelectorAll('span[aria-hidden="true"]')
-          for (const span of spans) {
-            const text = span.textContent?.trim()
-            if (text && /^\\d+$/.test(text) && parseInt(text) < 10000) {
-              const parent = span.closest('[role="listitem"]') || span.closest('[data-testid]')
-              if (parent) total += parseInt(text, 10)
-            }
-          }
-          return total
+          // Best: page title "(X) WhatsApp"
+          const m = document.title.match(/\\((\\d+)\\)/)
+          if (m) return parseInt(m[1], 10)
+          // Fallback: aria-label unread badges
+          let t = 0
+          document.querySelectorAll('[aria-label*="unread"]').forEach(b => {
+            const x = b.getAttribute('aria-label')?.match(/(\\d+)\\s*unread/)
+            if (x) t += parseInt(x[1], 10)
+          })
+          return t
         } catch(e) { return 0 }
       })()
     `).then((count: number) => {
@@ -135,13 +112,12 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     }).catch(() => {})
   }, [accountId, onUnreadUpdate])
 
-  // Setup webview events
   useEffect(() => {
     const webview = webviewRef.current
     if (!webview) return
 
     const handleDomReady = () => {
-      // Grant notification permission
+      // Notification permission
       webview.executeJavaScript(`
         (function() {
           if (window.Notification) {
@@ -157,10 +133,8 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
         ::-webkit-scrollbar-thumb { background: #333; }
       `)
 
-      // Extract avatar aggressively — try every 2s for the first 20s
-      for (let i = 1; i <= 10; i++) {
-        setTimeout(extractAvatar, i * 2000)
-      }
+      // Extract avatar aggressively — every 2s for first 20s
+      for (let i = 1; i <= 10; i++) setTimeout(extractAvatar, i * 2000)
       setTimeout(extractUnreadCount, 3000)
     }
 
@@ -174,16 +148,15 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     }
   }, [extractAvatar, extractUnreadCount])
 
-  // Reset avatar found flag on account change
   useEffect(() => { avatarFoundRef.current = false }, [accountId])
 
-  // Poll unread every 5s
+  // Poll unread every 3s
   useEffect(() => {
     unreadIntervalRef.current = setInterval(extractUnreadCount, 3000)
     return () => { if (unreadIntervalRef.current) clearInterval(unreadIntervalRef.current) }
   }, [extractUnreadCount])
 
-  // Retry avatar every 30s if not found
+  // Retry avatar every 10s if not found
   useEffect(() => {
     if (!avatarFoundRef.current) {
       avatarIntervalRef.current = setInterval(extractAvatar, 10000)
