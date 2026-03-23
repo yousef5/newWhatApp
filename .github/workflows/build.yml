@@ -50,7 +50,7 @@ jobs:
       - name: Build DEB
         run: |
           bun run build
-          npx electron-builder --linux deb --config electron-builder.yml
+          npx electron-builder --linux deb --publish never --config electron-builder.yml
 
       - name: Upload DEB
         uses: actions/upload-artifact@v4
