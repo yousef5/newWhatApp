@@ -1,12 +1,13 @@
 pkgname=multiwhatsapp
 pkgver=2.0.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Multi-account WhatsApp desktop client"
 arch=('x86_64')
 url="https://github.com/yousef5/newWhatApp"
 license=('MIT')
 depends=('gtk3' 'nss' 'libxss' 'alsa-lib' 'libxtst' 'libdrm' 'mesa')
 makedepends=('bun' 'nodejs')
+install=multiwhatsapp.install
 source=()
 options=('!strip')
 
@@ -45,10 +46,15 @@ package() {
   # chrome-sandbox needs SUID
   chmod 4755 "$pkgdir/opt/$pkgname/chrome-sandbox"
 
-  # Create launcher script
-  install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" << EOF
+  # Create launcher script with Wayland detection
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" << 'EOF'
 #!/bin/bash
-exec /opt/$pkgname/multiwhatsapp --no-sandbox "\$@"
+# Detect Wayland
+WAYLAND_FLAGS=""
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+  WAYLAND_FLAGS="--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations"
+fi
+exec /opt/multiwhatsapp/multiwhatsapp --no-sandbox $WAYLAND_FLAGS "$@"
 EOF
 
   # Install icons

@@ -1,21 +1,22 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 
 interface WhatsAppViewProps {
   accountId: string
   isActive: boolean
-  isPending?: boolean
   onAvatarUpdate?: (accountId: string, dataUrl: string) => void
   onNameUpdate?: (accountId: string, name: string) => void
   onUnreadUpdate?: (accountId: string, count: number) => void
-  onLoginSuccess?: (accountId: string) => void
 }
 
-export default function WhatsAppView({ accountId, isActive, isPending, onAvatarUpdate, onNameUpdate, onUnreadUpdate, onLoginSuccess }: WhatsAppViewProps) {
+type ViewState = 'loading' | 'ready' | 'offline' | 'error'
+
+export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNameUpdate, onUnreadUpdate }: WhatsAppViewProps) {
   const webviewRef = useRef<any>(null)
-  const loginDetectedRef = useRef(false)
   const unreadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarFoundRef = useRef(false)
+  const [viewState, setViewState] = useState<ViewState>('loading')
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   const extractAvatar = useCallback(() => {
     const webview = webviewRef.current
@@ -120,6 +121,9 @@ export default function WhatsAppView({ accountId, isActive, isPending, onAvatarU
     if (!webview) return
 
     const handleDomReady = () => {
+      setViewState('ready')
+      setErrorMessage('')
+
       // Notification permission
       webview.executeJavaScript(`
         (function() {
@@ -136,58 +140,53 @@ export default function WhatsAppView({ accountId, isActive, isPending, onAvatarU
         ::-webkit-scrollbar-thumb { background: #333; }
       `)
 
-      // Extract avatar aggressively — every 2s for first 20s
+      // Extract avatar aggressively -- every 2s for first 20s
       for (let i = 1; i <= 10; i++) setTimeout(extractAvatar, i * 2000)
       setTimeout(extractUnreadCount, 3000)
     }
 
-    const handleTitleUpdate = (_e: any, title: string) => {
-      extractUnreadCount()
-      // Detect successful login — title changes from "WhatsApp" (QR screen) to something with chats
-      if (!loginDetectedRef.current && isPending && onLoginSuccess) {
-        // WhatsApp Web title becomes "(X) WhatsApp" or just "WhatsApp" after login
-        // The QR page title is "WhatsApp Web" or similar — once chats load, it changes
-        if (title && !title.includes('QR') && !title.includes('Web')) {
-          loginDetectedRef.current = true
-          onLoginSuccess(accountId)
-        }
-      }
-    }
+    const handleTitleUpdate = () => extractUnreadCount()
 
-    // Also poll for login detection via DOM
-    let loginCheckInterval: ReturnType<typeof setInterval> | null = null
-    if (isPending && onLoginSuccess) {
-      loginCheckInterval = setInterval(() => {
-        if (loginDetectedRef.current) {
-          if (loginCheckInterval) clearInterval(loginCheckInterval)
-          return
-        }
-        webview.executeJavaScript(`
-          (function() {
-            // Check if chat list is visible (means logged in)
-            const chatList = document.querySelector('[role="listitem"]')
-              || document.querySelector('[data-testid="chat-list"]')
-              || document.querySelector('[aria-label*="chat"]')
-            return !!chatList
-          })()
-        `).then((loggedIn: boolean) => {
-          if (loggedIn && !loginDetectedRef.current) {
-            loginDetectedRef.current = true
-            onLoginSuccess!(accountId)
-            if (loginCheckInterval) clearInterval(loginCheckInterval)
-          }
-        }).catch(() => {})
-      }, 3000)
+    const handleDidFailLoad = (_e: any) => {
+      if (!navigator.onLine) {
+        setViewState('offline')
+        setErrorMessage('No internet connection')
+      } else {
+        setViewState('error')
+        setErrorMessage('Failed to load WhatsApp Web')
+      }
     }
 
     webview.addEventListener('dom-ready', handleDomReady)
     webview.addEventListener('page-title-updated', handleTitleUpdate)
+    webview.addEventListener('did-fail-load', handleDidFailLoad)
     return () => {
       webview.removeEventListener('dom-ready', handleDomReady)
       webview.removeEventListener('page-title-updated', handleTitleUpdate)
-      if (loginCheckInterval) clearInterval(loginCheckInterval)
+      webview.removeEventListener('did-fail-load', handleDidFailLoad)
     }
-  }, [extractAvatar, extractUnreadCount, isPending, onLoginSuccess, accountId])
+  }, [extractAvatar, extractUnreadCount])
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => {
+      if (viewState === 'offline') {
+        setViewState('loading')
+        webviewRef.current?.reload()
+      }
+    }
+    const handleOffline = () => {
+      setViewState('offline')
+      setErrorMessage('No internet connection')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [viewState])
 
   useEffect(() => { avatarFoundRef.current = false }, [accountId])
 
@@ -205,11 +204,16 @@ export default function WhatsAppView({ accountId, isActive, isPending, onAvatarU
     return () => { if (avatarIntervalRef.current) clearInterval(avatarIntervalRef.current) }
   }, [extractAvatar])
 
+  const handleRetry = () => {
+    setViewState('loading')
+    setErrorMessage('')
+    webviewRef.current?.reload()
+  }
+
+  const showOverlay = isActive && (viewState === 'offline' || viewState === 'error')
+
   return (
-    <webview
-      ref={webviewRef}
-      src="https://web.whatsapp.com"
-      partition={`persist:wa-${accountId}`}
+    <div
       style={{
         display: isActive ? 'flex' : 'none',
         width: '100%',
@@ -218,9 +222,74 @@ export default function WhatsAppView({ accountId, isActive, isPending, onAvatarU
         top: 0,
         left: 0,
       }}
-      // @ts-ignore
-      allowpopups="true"
-      useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-    />
+    >
+      <webview
+        ref={webviewRef}
+        src="https://web.whatsapp.com"
+        partition={`persist:wa-${accountId}`}
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+        // @ts-ignore
+        allowpopups="true"
+        useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      />
+
+      {/* Error / Offline overlay */}
+      {showOverlay && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#000000',
+            zIndex: 10,
+            gap: '16px',
+          }}
+        >
+          {viewState === 'offline' ? (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="1" y1="1" x2="23" y2="23" />
+              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+              <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
+              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+          ) : (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          )}
+          <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '2px' }}>
+            {errorMessage || 'Something went wrong'}
+          </span>
+          <button
+            onClick={handleRetry}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#a855f7',
+              background: 'transparent',
+              border: '2px solid #a855f7',
+              padding: '8px 24px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}
+          >
+            RETRY
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

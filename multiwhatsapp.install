@@ -1,0 +1,24 @@
+post_install() {
+  # Fix permissions on /opt/multiwhatsapp
+  if [ -d /opt/multiwhatsapp ]; then
+    find /opt/multiwhatsapp/ -type d -exec chmod 755 {} \;
+    find /opt/multiwhatsapp/ -type f -exec chmod 644 {} \;
+    chmod 755 /opt/multiwhatsapp/multiwhatsapp
+    chmod 755 /opt/multiwhatsapp/chrome_crashpad_handler
+    chmod 4755 /opt/multiwhatsapp/chrome-sandbox
+    chmod 755 /opt/multiwhatsapp/libEGL.so
+    chmod 755 /opt/multiwhatsapp/libGLESv2.so
+    chmod 755 /opt/multiwhatsapp/libffmpeg.so
+    chmod 755 /opt/multiwhatsapp/libvk_swiftshader.so
+    chmod 755 /opt/multiwhatsapp/libvulkan.so.1
+  fi
+}
+
+post_upgrade() {
+  post_install
+}
+
+pre_upgrade() {
+  # Remove old installation to avoid stale permissions
+  rm -rf /opt/multiwhatsapp
+}
