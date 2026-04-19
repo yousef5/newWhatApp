@@ -1,20 +1,31 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 
+export type ViewState = 'loading' | 'ready' | 'offline' | 'error'
+
+export interface UnreadChat {
+  name: string
+  message: string
+  count: number
+}
+
 interface WhatsAppViewProps {
   accountId: string
   isActive: boolean
+  refreshTrigger?: number
+  resetTrigger?: number
   onAvatarUpdate?: (accountId: string, dataUrl: string) => void
   onNameUpdate?: (accountId: string, name: string) => void
   onUnreadUpdate?: (accountId: string, count: number) => void
+  onViewStateChange?: (accountId: string, state: ViewState) => void
+  onUnreadChatsUpdate?: (accountId: string, chats: UnreadChat[]) => void
 }
 
-type ViewState = 'loading' | 'ready' | 'offline' | 'error'
-
-export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNameUpdate, onUnreadUpdate }: WhatsAppViewProps) {
+export default function WhatsAppView({ accountId, isActive, refreshTrigger, resetTrigger, onAvatarUpdate, onNameUpdate, onUnreadUpdate, onViewStateChange, onUnreadChatsUpdate }: WhatsAppViewProps) {
   const webviewRef = useRef<any>(null)
   const unreadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const avatarFoundRef = useRef(false)
+  const loadFailedRef = useRef(false)
   const [viewState, setViewState] = useState<ViewState>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
 
@@ -116,11 +127,67 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     }).catch(() => {})
   }, [accountId, onUnreadUpdate])
 
+  const extractUnreadChats = useCallback(() => {
+    const webview = webviewRef.current
+    if (!webview || !onUnreadChatsUpdate) return
+
+    webview.executeJavaScript(`
+      (function() {
+        try {
+          var results = [];
+          var seen = {};
+          var els = document.querySelectorAll('[aria-label]');
+
+          for (var i = 0; i < els.length; i++) {
+            var el = els[i];
+            var aria = el.getAttribute('aria-label') || '';
+            var m = aria.match(/(\\d+)\\s*unread/i);
+            if (!m) continue;
+            var count = parseInt(m[1]);
+            if (!count) continue;
+
+            var parent = el;
+            for (var j = 0; j < 15; j++) {
+              parent = parent.parentElement;
+              if (!parent) break;
+              var titleEl = parent.querySelector('span[title]');
+              if (!titleEl) continue;
+              var name = titleEl.getAttribute('title') || '';
+              if (!name || seen[name]) break;
+              seen[name] = true;
+
+              var message = '';
+              var spans = parent.querySelectorAll('span[dir]');
+              for (var k = 0; k < spans.length; k++) {
+                if (spans[k] === titleEl) continue;
+                var t = (spans[k].textContent || '').trim();
+                if (t.length > 1 && t !== name) {
+                  message = t.substring(0, 120);
+                  break;
+                }
+              }
+
+              results.push({ name: name, message: message, count: count });
+              break;
+            }
+          }
+
+          return results.slice(0, 20);
+        } catch(e) { return []; }
+      })()
+    `).then((chats: any[]) => {
+      if (Array.isArray(chats)) {
+        onUnreadChatsUpdate(accountId, chats)
+      }
+    }).catch(() => {})
+  }, [accountId, onUnreadChatsUpdate])
+
   useEffect(() => {
     const webview = webviewRef.current
     if (!webview) return
 
     const handleDomReady = () => {
+      if (loadFailedRef.current) return
       setViewState('ready')
       setErrorMessage('')
 
@@ -143,11 +210,13 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
       // Extract avatar aggressively -- every 2s for first 20s
       for (let i = 1; i <= 10; i++) setTimeout(extractAvatar, i * 2000)
       setTimeout(extractUnreadCount, 3000)
+      setTimeout(extractUnreadChats, 5000)
     }
 
     const handleTitleUpdate = () => extractUnreadCount()
 
     const handleDidFailLoad = (_e: any) => {
+      loadFailedRef.current = true
       if (!navigator.onLine) {
         setViewState('offline')
         setErrorMessage('No internet connection')
@@ -165,7 +234,7 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
       webview.removeEventListener('page-title-updated', handleTitleUpdate)
       webview.removeEventListener('did-fail-load', handleDidFailLoad)
     }
-  }, [extractAvatar, extractUnreadCount])
+  }, [extractAvatar, extractUnreadCount, extractUnreadChats])
 
   // Listen for online/offline events
   useEffect(() => {
@@ -204,10 +273,51 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
     return () => { if (avatarIntervalRef.current) clearInterval(avatarIntervalRef.current) }
   }, [extractAvatar])
 
+  // Poll unread chats every 8s
+  useEffect(() => {
+    const interval = setInterval(extractUnreadChats, 8000)
+    return () => clearInterval(interval)
+  }, [extractUnreadChats])
+
+  // Notify parent of view state changes
+  useEffect(() => {
+    onViewStateChange?.(accountId, viewState)
+  }, [accountId, viewState, onViewStateChange])
+
+  // Handle external refresh trigger
+  const prevRefreshRef = useRef(refreshTrigger)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger !== prevRefreshRef.current) {
+      prevRefreshRef.current = refreshTrigger
+      loadFailedRef.current = false
+      setViewState('loading')
+      setErrorMessage('')
+      webviewRef.current?.loadURL('https://web.whatsapp.com')
+    }
+  }, [refreshTrigger])
+
+  // Handle external reset trigger (clear session + reload)
+  const prevResetRef = useRef(resetTrigger)
+  useEffect(() => {
+    if (resetTrigger !== undefined && resetTrigger !== prevResetRef.current) {
+      prevResetRef.current = resetTrigger
+      loadFailedRef.current = false
+      setViewState('loading')
+      setErrorMessage('')
+      avatarFoundRef.current = false
+      window.api.invoke('account:resetSession', { id: accountId }).then(() => {
+        webviewRef.current?.loadURL('https://web.whatsapp.com')
+      }).catch(() => {
+        webviewRef.current?.loadURL('https://web.whatsapp.com')
+      })
+    }
+  }, [resetTrigger, accountId])
+
   const handleRetry = () => {
+    loadFailedRef.current = false
     setViewState('loading')
     setErrorMessage('')
-    webviewRef.current?.reload()
+    webviewRef.current?.loadURL('https://web.whatsapp.com')
   }
 
   const showOverlay = isActive && (viewState === 'offline' || viewState === 'error')
@@ -271,23 +381,52 @@ export default function WhatsAppView({ accountId, isActive, onAvatarUpdate, onNa
           <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '2px' }}>
             {errorMessage || 'Something went wrong'}
           </span>
-          <button
-            onClick={handleRetry}
-            style={{
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              fontWeight: 700,
-              color: '#a855f7',
-              background: 'transparent',
-              border: '2px solid #a855f7',
-              padding: '8px 24px',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-            }}
-          >
-            RETRY
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={handleRetry}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#a855f7',
+                background: 'transparent',
+                border: '2px solid #a855f7',
+                padding: '8px 24px',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+              }}
+            >
+              RETRY
+            </button>
+            <button
+              onClick={() => {
+                loadFailedRef.current = false
+                setViewState('loading')
+                setErrorMessage('')
+                avatarFoundRef.current = false
+                window.api.invoke('account:resetSession', { id: accountId }).then(() => {
+                  webviewRef.current?.loadURL('https://web.whatsapp.com')
+                }).catch(() => {
+                  webviewRef.current?.loadURL('https://web.whatsapp.com')
+                })
+              }}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#f59e0b',
+                background: 'transparent',
+                border: '2px solid #f59e0b',
+                padding: '8px 24px',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+              }}
+            >
+              RESET SESSION
+            </button>
+          </div>
         </div>
       )}
     </div>

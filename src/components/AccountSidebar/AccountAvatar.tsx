@@ -7,16 +7,19 @@ interface AccountAvatarProps {
   isActive: boolean
   avatar?: string | null
   unreadCount?: number
+  isDisconnected?: boolean
   onClick: () => void
   onRename: (id: string, name: string) => void
   onChangeAvatar: (id: string) => void
   onRemoveAvatar: (id: string) => void
   onRemoveAccount: (id: string) => void
+  onRefresh?: (id: string) => void
+  onResetSession?: (id: string) => void
 }
 
 export default function AccountAvatar({
-  account, isActive, avatar, unreadCount = 0, onClick,
-  onRename, onChangeAvatar, onRemoveAvatar, onRemoveAccount,
+  account, isActive, avatar, unreadCount = 0, isDisconnected = false, onClick,
+  onRename, onChangeAvatar, onRemoveAvatar, onRemoveAccount, onRefresh, onResetSession,
 }: AccountAvatarProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
@@ -161,6 +164,26 @@ export default function AccountAvatar({
         />
       </button>
 
+      {/* Refresh button when disconnected */}
+      {isDisconnected && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRefresh?.(account.id) }}
+          className="absolute -bottom-0.5 -right-0.5 w-5 h-5 flex items-center justify-center cursor-pointer z-10"
+          style={{
+            borderRadius: '50%',
+            background: '#000',
+            border: '2px solid #f59e0b',
+            boxShadow: '0 0 6px rgba(245,158,11,0.5)',
+          }}
+          title="Reconnect"
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 4 23 10 17 10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+          </svg>
+        </button>
+      )}
+
       {/* Name label for active account */}
       {isActive && (
         <div className="mt-1 w-full text-center">
@@ -189,6 +212,9 @@ export default function AccountAvatar({
                 REMOVE AVATAR
               </button>
             )}
+            <button onClick={() => { setShowMenu(false); onResetSession?.(account.id) }} className="w-full text-left px-3 py-1.5 text-[11px] text-yellow-500 hover:bg-bg-tertiary cursor-pointer font-mono border-b border-border-primary">
+              RESET SESSION
+            </button>
             <button onClick={() => { setShowMenu(false); onRemoveAccount(account.id) }} className="w-full text-left px-3 py-1.5 text-[11px] text-accent-red hover:bg-bg-tertiary cursor-pointer font-mono">
               REMOVE ACCOUNT
             </button>

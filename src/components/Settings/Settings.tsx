@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccountsStore } from '@/stores/accounts'
+import { getInitials } from '@/lib/utils'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import type { AppConfig, AppSettings } from '@shared/types'
 
 interface SettingsProps {
   onClose: () => void
+  avatars: Record<string, string>
 }
 
-export default function Settings({ onClose }: SettingsProps) {
+export default function Settings({ onClose, avatars }: SettingsProps) {
   const accounts = useAccountsStore((s) => s.accounts)
   const setAccounts = useAccountsStore((s) => s.setAccounts)
 
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [accountNames, setAccountNames] = useState<Record<string, string>>({})
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
 
   // Load config on mount
   useEffect(() => {
@@ -47,21 +51,13 @@ export default function Settings({ onClose }: SettingsProps) {
     [accountNames]
   )
 
-  const handleRemove = useCallback(
+  const handleRemoveConfirmed = useCallback(
     (id: string) => {
-      const confirmed = window.confirm(
-        'Are you sure you want to remove this account? This action cannot be undone.'
-      )
-      if (!confirmed) return
-
+      setConfirmRemoveId(null)
       window.api
         .invoke('account:remove', { id })
-        .then(() => {
-          return window.api.invoke('account:list', undefined)
-        })
-        .then((accountList) => {
-          setAccounts(accountList)
-        })
+        .then(() => window.api.invoke('account:list', undefined))
+        .then((accountList) => setAccounts(accountList))
         .catch(console.error)
     },
     [setAccounts]
@@ -110,44 +106,72 @@ export default function Settings({ onClose }: SettingsProps) {
             <p className="text-xs text-text-muted py-2 font-mono uppercase">NO ACCOUNTS ADDED YET.</p>
           ) : (
             <div className="space-y-2">
-              {accounts.map((acc) => (
-                <div
-                  key={acc.id}
-                  className="flex items-center gap-2 py-2 border-b-2 border-border-primary last:border-b-0"
-                >
-                  <input
-                    type="text"
-                    value={accountNames[acc.id] ?? acc.name}
-                    onChange={(e) =>
-                      setAccountNames((prev) => ({ ...prev, [acc.id]: e.target.value }))
-                    }
-                    onBlur={() => handleRename(acc.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleRename(acc.id)
-                    }}
-                    className="flex-1 px-2 py-1 text-xs text-text-primary bg-bg-primary border-2 border-border-primary focus:outline-none focus:border-accent-purple font-mono"
-                  />
-                  <button
-                    onClick={() => handleRemove(acc.id)}
-                    className="px-3 py-1 text-[10px] text-accent-red border-2 border-accent-red hover:bg-accent-red hover:text-white cursor-pointer font-mono font-bold uppercase"
+              {accounts.map((acc) => {
+                const imgSrc = avatars[acc.id] || acc.customAvatar
+                return (
+                  <div
+                    key={acc.id}
+                    className="flex items-center gap-2 py-2 border-b-2 border-border-primary last:border-b-0"
                   >
-                    REMOVE
-                  </button>
-                </div>
-              ))}
+                    {/* Account avatar */}
+                    <div className="w-8 h-8 shrink-0 overflow-hidden" style={{ borderRadius: '50%' }}>
+                      {imgSrc ? (
+                        <img src={imgSrc} alt={acc.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-[10px] font-bold font-mono"
+                          style={{ backgroundColor: acc.avatarColor, color: '#fff' }}
+                        >
+                          {getInitials(acc.name)}
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={accountNames[acc.id] ?? acc.name}
+                      onChange={(e) =>
+                        setAccountNames((prev) => ({ ...prev, [acc.id]: e.target.value }))
+                      }
+                      onBlur={() => handleRename(acc.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRename(acc.id)
+                      }}
+                      className="flex-1 px-2 py-1 text-xs text-text-primary bg-bg-primary border-2 border-border-primary focus:outline-none focus:border-accent-purple font-mono"
+                    />
+                    <button
+                      onClick={() => setConfirmRemoveId(acc.id)}
+                      className="px-3 py-1 text-[10px] text-accent-red border-2 border-accent-red hover:bg-accent-red hover:text-white cursor-pointer font-mono font-bold uppercase"
+                    >
+                      REMOVE
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </Section>
 
         {/* About */}
         <Section title="ABOUT">
-          <p className="text-xs text-text-primary py-1 font-mono font-bold">MULTIWHATSAPP V2.0.0</p>
+          <p className="text-xs text-text-primary py-1 font-mono font-bold">NEXUS V2.0.0</p>
           <p className="text-[10px] text-text-muted leading-relaxed font-mono">
-            MULTI-ACCOUNT WHATSAPP DESKTOP CLIENT USING EMBEDDED WHATSAPP WEB.
+            MULTI-ACCOUNT WHATSAPP DESKTOP CLIENT.
             EACH ACCOUNT RUNS IN ITS OWN ISOLATED SESSION.
           </p>
         </Section>
       </div>
+
+      {/* Confirm remove dialog */}
+      {confirmRemoveId && (
+        <ConfirmDialog
+          title="REMOVE ACCOUNT"
+          message="Are you sure you want to remove this account? The WhatsApp session will be deleted. This action cannot be undone."
+          confirmText="REMOVE"
+          cancelText="CANCEL"
+          onConfirm={() => handleRemoveConfirmed(confirmRemoveId)}
+          onCancel={() => setConfirmRemoveId(null)}
+        />
+      )}
     </div>
   )
 }

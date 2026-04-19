@@ -57,6 +57,14 @@ export function registerIPCHandlers(): void {
     } catch {}
   })
 
+  ipcMain.handle('account:resetSession', async (_event, payload: IPCCommands['account:resetSession']['payload']) => {
+    try {
+      const ses = session.fromPartition(`persist:wa-${payload.id}`)
+      await ses.clearStorageData()
+      await ses.clearCache()
+    } catch {}
+  })
+
   ipcMain.handle('account:rename', (_event, payload: IPCCommands['account:rename']['payload']) => {
     renameAccount(payload.id, payload.name)
   })

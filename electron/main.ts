@@ -160,7 +160,7 @@ function createWindow(): void {
 function createTray(): void {
   const trayIcon = nativeImage.createFromPath(join(__dirname, '../../resources/icon-32.png'))
   tray = new Tray(trayIcon.isEmpty() ? nativeImage.createEmpty() : trayIcon)
-  tray.setToolTip('MultiWhatsApp')
+  tray.setToolTip('Nexus')
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show', click: () => { mainWindow?.show(); mainWindow?.focus() } },
     { type: 'separator' },

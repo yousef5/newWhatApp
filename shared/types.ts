@@ -51,6 +51,7 @@ export type IPCCommands = {
   'account:reorder': { payload: { ids: string[] }; response: void }
   'account:list': { payload: void; response: Account[] }
   'account:setAvatar': { payload: { id: string; avatar: string | null }; response: void }
+  'account:resetSession': { payload: { id: string }; response: void }
   'dialog:pickImage': { payload: void; response: string | null }
   'config:get': { payload: void; response: AppConfig }
   'config:update': { payload: { settings: Partial<AppSettings> }; response: void }
